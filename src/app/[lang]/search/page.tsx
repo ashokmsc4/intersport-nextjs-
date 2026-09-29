@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { parseSort, searchProducts } from "@/lib/magento/catalog";
+import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
 
 const PAGE_SIZE = 24;
@@ -37,14 +39,9 @@ export default async function SearchPage({
   const page = Math.max(1, Number(query.page) || 1);
   const sort = parseSort(query.sort);
 
-  const result = q
-    ? await searchProducts(lang, q, { sort, page, pageSize: PAGE_SIZE }).catch(
-        (error) => {
-          console.error("[magento] search:", error);
-          return null;
-        },
-      )
-    : null;
+  const { value: result, error: failure } = q
+    ? await settle(searchProducts(lang, q, { sort, page, pageSize: PAGE_SIZE }), "search")
+    : { value: null, error: null };
 
   return (
     <section>
@@ -78,9 +75,7 @@ export default async function SearchPage({
           </aside>
           <div>
             {result === null ? (
-              <p className="rounded border border-amber-300 bg-amber-50 p-4 text-amber-900">
-                {dict.home.backendUnavailable}
-              </p>
+              <BackendError dict={dict} reason={failure ?? ""} />
             ) : result.items.length === 0 ? (
               <p>{dict.search.noResults.replace("{q}", q)}</p>
             ) : (

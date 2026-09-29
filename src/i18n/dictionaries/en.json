@@ -16,7 +16,7 @@
   },
   "home": {
     "shopByCategory": "Shop by category",
-    "backendUnavailable": "Could not reach the Magento backend. Check MAGENTO_BASE_URL in .env.local.",
+    "backendUnavailable": "Could not reach the Magento backend.",
     "shopNow": "Shop now",
     "viewAll": "View all",
     "endsOn": "Ends {date}"

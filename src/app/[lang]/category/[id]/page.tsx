@@ -11,7 +11,9 @@ import {
   selectedFilters,
   visibleChildren,
 } from "@/lib/magento/catalog";
+import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
 
 const PAGE_SIZE = 24;
@@ -47,16 +49,16 @@ export default async function CategoryPage({
   const page = Math.max(1, Number(query.page) || 1);
   const sort = parseSort(query.sort);
   const filters = selectedFilters(query, groups);
-  const result = await getCategoryProducts(locale, {
-    categoryId: category.id,
-    filters,
-    sort,
-    page,
-    pageSize: PAGE_SIZE,
-  }).catch((error) => {
-    console.error(`[magento] category ${category.id} products:`, error);
-    return null;
-  });
+  const { value: result, error: failure } = await settle(
+    getCategoryProducts(locale, {
+      categoryId: category.id,
+      filters,
+      sort,
+      page,
+      pageSize: PAGE_SIZE,
+    }),
+    `category ${category.id} products`,
+  );
   const subcategories = visibleChildren(category);
 
   return (
@@ -90,9 +92,7 @@ export default async function CategoryPage({
         </aside>
         <div>
           {result === null ? (
-            <p className="rounded border border-amber-300 bg-amber-50 p-4 text-amber-900">
-              {dict.home.backendUnavailable}
-            </p>
+            <BackendError dict={dict} reason={failure ?? ""} />
           ) : result.items.length === 0 ? (
             <p>{dict.category.empty}</p>
           ) : (

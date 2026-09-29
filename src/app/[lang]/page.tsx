@@ -8,7 +8,9 @@ import {
   type HomeLink,
   type HomeSection,
 } from "@/lib/magento/home";
+import { BackendError } from "@/components/BackendError";
 import { Banner } from "@/components/Banner";
+import { settle } from "@/lib/magento/diagnose";
 import { ProductCard, cardFromListItem } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
 import { productImageUrl } from "@/lib/magento/client";
@@ -169,21 +171,15 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   if (!hasLocale(lang)) notFound();
   const dict = await getDictionary(lang);
 
-  const [sections, categories] = await Promise.all([
-    getHomeSections(lang).catch((error) => {
-      console.error("[magento] home config:", error);
-      return null;
-    }),
+  const [home, categories] = await Promise.all([
+    settle(getHomeSections(lang), "home config"),
     getMenuCategories(lang).catch(() => []),
   ]);
+  const sections = home.value;
 
   return (
     <div className="flex flex-col gap-10">
-      {sections === null && (
-        <p className="rounded border border-amber-300 bg-amber-50 p-4 text-amber-900">
-          {dict.home.backendUnavailable}
-        </p>
-      )}
+      {home.error !== null && <BackendError dict={dict} reason={home.error} />}
 
       {sections?.map((section, i) => (
         <Section key={i} section={section} locale={lang} dict={dict} />
