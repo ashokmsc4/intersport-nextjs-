@@ -27,7 +27,7 @@ export class MagentoError extends Error {
 type Auth =
   /** No Authorization header. */
   | { type: "none" }
-  /** Server-side integration token (catalog, guest cart). */
+  /** Integration token from MAGENTO_INTEGRATION_TOKEN, sent only when set. */
   | { type: "integration" }
   /** Logged-in customer token. Responses are never cached. */
   | { type: "customer"; token: string };
@@ -83,10 +83,9 @@ export function magentoRest<T>(
   };
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
-  if (auth.type === "integration") {
-    const token = process.env.MAGENTO_INTEGRATION_TOKEN;
-    if (!token) throw new MagentoError("MAGENTO_INTEGRATION_TOKEN is not set");
-    headers.Authorization = `Bearer ${token}`;
+  const integrationToken = process.env.MAGENTO_INTEGRATION_TOKEN;
+  if (auth.type === "integration" && integrationToken) {
+    headers.Authorization = `Bearer ${integrationToken}`;
   } else if (auth.type === "customer") {
     headers.Authorization = `Bearer ${auth.token}`;
   }

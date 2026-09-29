@@ -11,7 +11,7 @@
   },
   "home": {
     "shopByCategory": "Shop by category",
-    "backendUnavailable": "Could not reach the Magento backend. Check MAGENTO_BASE_URL and MAGENTO_INTEGRATION_TOKEN in .env.local."
+    "backendUnavailable": "Could not reach the Magento backend. Check MAGENTO_BASE_URL in .env.local."
   },
   "footer": {
     "rights": "All rights reserved."

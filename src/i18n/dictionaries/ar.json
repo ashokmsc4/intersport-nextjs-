@@ -11,7 +11,7 @@
   },
   "home": {
     "shopByCategory": "تسوق حسب الفئة",
-    "backendUnavailable": "تعذر الاتصال بخادم Magento. تحقق من MAGENTO_BASE_URL و MAGENTO_INTEGRATION_TOKEN في ملف .env.local."
+    "backendUnavailable": "تعذر الاتصال بخادم Magento. تحقق من MAGENTO_BASE_URL في ملف .env.local."
   },
   "footer": {
     "rights": "جميع الحقوق محفوظة."

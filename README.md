@@ -12,7 +12,7 @@ Headless storefront for [intersport.com.kw](https://intersport.com.kw), built wi
 ## Getting started
 
 ```bash
-cp .env.example .env.local   # then set MAGENTO_INTEGRATION_TOKEN
+cp .env.example .env.local   # defaults point at staging
 npm install
 npm run dev                  # http://localhost:3000
 ```
@@ -30,10 +30,11 @@ src/
 
 ## Magento API
 
-All Magento calls run on the server, so the integration token never reaches the browser.
+All Magento calls run on the server. The storefront endpoints don't need an integration token;
+`MAGENTO_INTEGRATION_TOKEN` is optional and never reaches the browser if set.
 
 - `magentoRest(path, { locale, auth })` calls `${MAGENTO_BASE_URL}/rest/${storeCode}/${path}`.
-  `auth` is `integration` (default, uses `MAGENTO_INTEGRATION_TOKEN`), `customer` (customer token) or `none`.
+  `auth` is `integration` (default; adds `MAGENTO_INTEGRATION_TOKEN` only when it is set), `customer` (customer token) or `none`.
   GET requests that don't use a customer token are cached for `MAGENTO_REVALIDATE_SECONDS`.
 - `magentoAppSettings(file, { locale })` reads the public mobile-app settings files under
   `/media/mobile-app/intersport/{store}/` (for example `data/categories.json`).
