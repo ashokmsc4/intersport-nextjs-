@@ -1,0 +1,129 @@
+import "server-only";
+import type { Locale } from "@/i18n/config";
+
+const BASE_URL = (process.env.MAGENTO_BASE_URL ?? "").replace(/\/$/, "");
+const REVALIDATE = Number(process.env.MAGENTO_REVALIDATE_SECONDS ?? 300);
+const SETTINGS_PATH =
+  process.env.MAGENTO_APP_SETTINGS_PATH ?? "/media/mobile-app/intersport";
+const SETTINGS_VERSION = process.env.MAGENTO_APP_SETTINGS_VERSION ?? "2.0.1";
+
+const storeCodes: Record<Locale, string> = {
+  en: process.env.MAGENTO_STORE_CODE_EN ?? "intersport_en",
+  ar: process.env.MAGENTO_STORE_CODE_AR ?? "intersport_ar",
+};
+
+export const storeCode = (locale: Locale) => storeCodes[locale];
+
+export class MagentoError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = "MagentoError";
+  }
+}
+
+type Auth =
+  /** No Authorization header. */
+  | { type: "none" }
+  /** Server-side integration token (catalog, guest cart). */
+  | { type: "integration" }
+  /** Logged-in customer token. Responses are never cached. */
+  | { type: "customer"; token: string };
+
+type RestOptions = {
+  locale: Locale;
+  auth?: Auth;
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  body?: unknown;
+  query?: URLSearchParams;
+  headers?: Record<string, string>;
+  /** Cache tags so webhooks can revalidate specific data. */
+  tags?: string[];
+};
+
+async function request<T>(url: string, init: RequestInit): Promise<T> {
+  if (!BASE_URL) throw new MagentoError("MAGENTO_BASE_URL is not set");
+
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    let message = `Magento responded ${res.status}`;
+    try {
+      const body = (await res.json()) as { message?: string };
+      if (body.message) message += `: ${body.message}`;
+    } catch {
+      // Non-JSON error body; keep the status-only message.
+    }
+    throw new MagentoError(message, res.status);
+  }
+  return (await res.json()) as T;
+}
+
+/**
+ * Calls the Magento REST API for the store view that matches `locale`:
+ * `${MAGENTO_BASE_URL}/rest/${storeCode}/${path}`.
+ * GET requests without a customer token are cached (ISR); everything else is not.
+ */
+export function magentoRest<T>(
+  path: string,
+  {
+    locale,
+    auth = { type: "integration" },
+    method = "GET",
+    body,
+    query,
+    headers: extraHeaders,
+    tags,
+  }: RestOptions,
+): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...extraHeaders,
+  };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  if (auth.type === "integration") {
+    const token = process.env.MAGENTO_INTEGRATION_TOKEN;
+    if (!token) throw new MagentoError("MAGENTO_INTEGRATION_TOKEN is not set");
+    headers.Authorization = `Bearer ${token}`;
+  } else if (auth.type === "customer") {
+    headers.Authorization = `Bearer ${auth.token}`;
+  }
+
+  const cacheable = method === "GET" && auth.type !== "customer";
+  const qs = query?.toString();
+  const url = `${BASE_URL}/rest/${storeCode(locale)}/${path.replace(/^\//, "")}${qs ? `?${qs}` : ""}`;
+
+  return request<T>(url, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    ...(cacheable
+      ? { next: { revalidate: REVALIDATE, tags } }
+      : { cache: "no-store" as const }),
+  });
+}
+
+/**
+ * Reads one of the public mobile-app settings files, e.g. `settings/config.json`
+ * or `data/categories.json`. Versioned files live under the settings version folder.
+ */
+export function magentoAppSettings<T>(
+  file: string,
+  { locale, versioned = false }: { locale: Locale; versioned?: boolean },
+): Promise<T> {
+  const version = versioned ? `/${SETTINGS_VERSION}` : "";
+  const url = `${BASE_URL}${SETTINGS_PATH}/${storeCode(locale)}${version}/${file}`;
+  return request<T>(url, {
+    headers: { Accept: "application/json" },
+    next: { revalidate: REVALIDATE, tags: [`settings:${file}`] },
+  });
+}
+
+/** Absolute URL for a product image path such as `/p/h/file.jpg`. */
+export function productImageUrl(file: string | null | undefined) {
+  if (!file) return null;
+  if (/^https?:\/\//.test(file)) return file;
+  return `${BASE_URL}/media/catalog/product${file.startsWith("/") ? "" : "/"}${file}`;
+}

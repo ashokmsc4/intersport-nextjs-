@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Replace with Intersport brand tokens once the design is confirmed. */
+@theme {
+  --color-brand: #0033a0;
+  --color-brand-accent: #e30613;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic",
+    Tahoma, sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: #171717;
+}

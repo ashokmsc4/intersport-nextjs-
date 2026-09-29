@@ -1,0 +1,25 @@
+{
+  "site": {
+    "name": "Intersport Kuwait",
+    "description": "Sports shoes, clothing and equipment in Kuwait"
+  },
+  "nav": {
+    "search": "Search",
+    "account": "Account",
+    "cart": "Cart",
+    "switchLanguage": "العربية"
+  },
+  "home": {
+    "shopByCategory": "Shop by category",
+    "backendUnavailable": "Could not reach the Magento backend. Check MAGENTO_BASE_URL and MAGENTO_INTEGRATION_TOKEN in .env.local."
+  },
+  "footer": {
+    "rights": "All rights reserved."
+  },
+  "category": {
+    "results": "{count} products",
+    "empty": "No products in this category yet.",
+    "previous": "Previous",
+    "next": "Next"
+  }
+}

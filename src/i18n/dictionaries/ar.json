@@ -1,0 +1,25 @@
+{
+  "site": {
+    "name": "إنترسبورت الكويت",
+    "description": "أحذية وملابس ومعدات رياضية في الكويت"
+  },
+  "nav": {
+    "search": "بحث",
+    "account": "حسابي",
+    "cart": "السلة",
+    "switchLanguage": "English"
+  },
+  "home": {
+    "shopByCategory": "تسوق حسب الفئة",
+    "backendUnavailable": "تعذر الاتصال بخادم Magento. تحقق من MAGENTO_BASE_URL و MAGENTO_INTEGRATION_TOKEN في ملف .env.local."
+  },
+  "footer": {
+    "rights": "جميع الحقوق محفوظة."
+  },
+  "category": {
+    "results": "{count} منتج",
+    "empty": "لا توجد منتجات في هذه الفئة حالياً.",
+    "previous": "السابق",
+    "next": "التالي"
+  }
+}
