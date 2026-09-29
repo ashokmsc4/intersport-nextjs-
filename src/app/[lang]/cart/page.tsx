@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { productImageUrl } from "@/lib/magento/client";
-import { getCart, type Cart } from "@/lib/magento/cart";
+import { getCart, HOME_DELIVERY, pickupStoreName, type Cart } from "@/lib/magento/cart";
 import { formatPrice } from "@/lib/format";
 import { currentCartRef } from "@/lib/shopper";
 import { CartLineControls } from "@/components/cart/CartLineControls";
@@ -80,10 +80,16 @@ export default async function CartPage({ params }: PageProps<"/[lang]/cart">) {
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
+                  {pickupStoreName(item) && (
+                    <p className="text-sm text-brand">
+                      {dict.delivery.pickupFrom.replace("{store}", pickupStoreName(item) ?? "")}
+                    </p>
+                  )}
                   <CartLineControls
                     locale={lang}
                     itemId={item.item_id}
                     sku={item.sku}
+                    sourceCode={String(item.source_code ?? HOME_DELIVERY)}
                     qty={Number(item.qty)}
                     maxQty={Number(item.remaining_qty ?? 10)}
                     dict={{ cart: dict.cart, product: dict.product, errors: dict.errors }}

@@ -62,6 +62,7 @@ Endpoints in use:
 | Checkout | `V1/aaw/arealist` (governorates and areas), `V1/finalize-checkout` (shipping + payment options), `V1/do-checkout` (places the order) |
 | Order history | `V1/mstore/me/orders` (scoped to the customer token; detail = same list filtered by `increment_id`) |
 | Saved addresses | `V3/customer/address/{customerId}` (list), `V3/customer/address` (create), `V3/customer/address/{addressId}` (delete) |
+| Click & Collect | `V1/storepickup_msi/{productId}/getAvailabilityByProduct` (stores with stock; per size for configurables); the store's location id is sent as the cart item's `source_code`, home delivery as `home_delivery`; checkout then offers `amstorepickup` |
 | Password reset | `V1/customers/password` (Magento emails a reset link; `MAGENTO_WEBSITE_ID`, default 3) |
 
 ### Running against production
@@ -109,6 +110,8 @@ the customer when their cart is empty, otherwise its items are added to the cust
 - `V1/mstore/products` doesn't do a plain "contains" match for text with spaces, and `V1/search` relevance on
   staging is weak (words are ORed); search quality depends on the backend's search configuration.
 - The password reset email links to the Magento website to set the new password.
+- Adding a product that's already in the cart with a different delivery option updates the existing line
+  (Magento merges items with the same SKU), so one product can't be split between home delivery and pickup.
 
 Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 
@@ -127,6 +130,10 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 - [x] Saved addresses (account page and checkout)
 - [x] Password reset request
 - [x] Search, category filters and sorting
+- [x] Cart side drawer (opens after add to cart and from the header)
+- [x] Home delivery / Click & Collect on the product page, pickup store shown in cart and preselected at checkout
+- [x] Footer (service highlights, customer service and about links, contact, social); content pages still link to Magento
+- [ ] Content (CMS) pages rebuilt in Next.js
 - [ ] Payment return pages (needs backend support)
 - [ ] Wishlist, change password, order cancellation
 - [ ] CMS pages, SEO redirects from existing Magento URLs

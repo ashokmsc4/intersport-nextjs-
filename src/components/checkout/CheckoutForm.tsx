@@ -57,12 +57,15 @@ export function CheckoutForm({
   governorates,
   prefill,
   saved = [],
+  preferPickup = false,
   dict,
 }: {
   locale: Locale;
   governorates: Governorate[];
   prefill: Partial<AddressInput>;
   saved?: SavedChoice[];
+  /** Cart has Click & Collect items: preselect the store pickup method. */
+  preferPickup?: boolean;
   dict: Pick<Dictionary, "checkout" | "account" | "cart" | "errors" | "addresses">;
 }) {
   const router = useRouter();
@@ -89,7 +92,9 @@ export function CheckoutForm({
       const result = await reviewCheckoutAction({ locale, address, note });
       if (!result.ok) return setError(result.error);
       setReview(result.data);
-      setShipping(result.data.shipping_methods[0]?.code ?? "");
+      const methods = result.data.shipping_methods;
+      const pickup = methods.find((m) => m.code.startsWith("amstorepickup"));
+      setShipping((preferPickup && pickup ? pickup : methods[0])?.code ?? "");
       const first = result.data.payment_methods[0];
       setPayment(first?.code ?? "");
       setGateway(first ? (gatewaysOf(first)[0]?.[0] ?? "") : "");

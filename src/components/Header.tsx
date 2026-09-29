@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { getMenuCategories } from "@/lib/magento/catalog";
 import { getCartCount, getCustomerName } from "@/lib/session";
+import { CartButton } from "@/components/cart/CartDrawer";
 
 export async function Header({
   locale,
@@ -58,14 +59,7 @@ export async function Header({
           <Link href={name ? `/${locale}/account` : `/${locale}/account/login`}>
             {name ? dict.nav.hello.replace("{name}", name) : dict.nav.login}
           </Link>
-          <Link href={`/${locale}/cart`} className="relative font-medium">
-            {dict.nav.cart}
-            {count > 0 && (
-              <span className="ms-1 rounded-full bg-brand-accent px-2 py-0.5 text-xs text-white">
-                {count}
-              </span>
-            )}
-          </Link>
+          <CartButton locale={locale} label={dict.nav.cart} count={count} />
           <Link href={`/${otherLocale}`} hrefLang={otherLocale}>
             {dict.nav.switchLanguage}
           </Link>

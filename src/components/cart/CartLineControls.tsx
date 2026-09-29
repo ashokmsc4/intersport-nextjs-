@@ -11,6 +11,7 @@ export function CartLineControls({
   sku,
   qty,
   maxQty,
+  sourceCode,
   dict,
 }: {
   locale: string;
@@ -18,6 +19,8 @@ export function CartLineControls({
   sku: string;
   qty: number;
   maxQty: number;
+  /** Kept on quantity updates so a Click & Collect line stays at its store. */
+  sourceCode: string;
   dict: Pick<Dictionary, "cart" | "product" | "errors">;
 }) {
   const [updateState, update, updating] = useActionState(updateQtyAction, undefined);
@@ -35,6 +38,7 @@ export function CartLineControls({
           <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="itemId" value={itemId} />
           <input type="hidden" name="sku" value={sku} />
+          <input type="hidden" name="sourceCode" value={sourceCode} />
           <label className="sr-only" htmlFor={`qty-${itemId}`}>
             {dict.product.quantity}
           </label>

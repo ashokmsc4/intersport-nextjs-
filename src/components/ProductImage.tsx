@@ -11,12 +11,15 @@ export function ProductImage({
   alt,
   sizes,
   priority = false,
+  optimized,
   className = "",
 }: {
   src: string | null;
   alt: string;
   sizes: string;
   priority?: boolean;
+  /** Override host detection (client components don't see server env). */
+  optimized?: boolean;
   className?: string;
 }) {
   return (
@@ -28,7 +31,7 @@ export function ProductImage({
           fill
           sizes={sizes}
           preload={priority}
-          unoptimized={!isOptimizable(src)}
+          unoptimized={!(optimized ?? isOptimizable(src))}
           className="object-contain"
         />
       )}

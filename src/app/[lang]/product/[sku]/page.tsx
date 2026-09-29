@@ -9,6 +9,7 @@ import {
   getProductDetail,
   getRecommendations,
 } from "@/lib/magento/catalog";
+import { getPickupAvailability } from "@/lib/magento/pickup";
 import type { ProductDetail } from "@/lib/magento/types";
 import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
@@ -57,6 +58,7 @@ function sizeOptions(product: ProductDetail): SizeChoice[] {
   return [...(product.childrens ?? [])]
     .sort((a, b) => sizePosition(a) - sizePosition(b))
     .map((child) => ({
+      productId: String(child.id),
       sku: child.sku,
       label: option(child, "size")?.label || child.sku,
       available: isAvailable(child),
@@ -76,9 +78,14 @@ export default async function ProductPage({
   const { locale, product } = await loadProduct(lang, decodeURIComponent(sku));
   const dict = await getDictionary(locale);
 
-  const recommendations = await getRecommendations(locale, product.sku).catch(
-    () => [] as ProductDetail[],
-  );
+  const hasChildren = (product.childrens ?? []).length > 0;
+  const [recommendations, availability] = await Promise.all([
+    getRecommendations(locale, product.sku).catch(() => [] as ProductDetail[]),
+    // Simple products: preload store stock. Sized products load it per size.
+    hasChildren
+      ? Promise.resolve(null)
+      : getPickupAvailability(locale, String(product.id)).catch(() => null),
+  ]);
 
   // Gallery paths are served from the storefront host; `image` is a fallback.
   const gallery = [
@@ -144,9 +151,11 @@ export default async function ProductPage({
           <AddToCart
             locale={locale}
             sku={product.sku}
+            productId={String(product.id)}
             sizes={sizes}
             inStock={inStock}
-            dict={{ product: dict.product, errors: dict.errors }}
+            initialAvailability={availability}
+            dict={{ product: dict.product, errors: dict.errors, delivery: dict.delivery }}
           />
 
           {product.description && (

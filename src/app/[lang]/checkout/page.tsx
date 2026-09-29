@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { productImageUrl } from "@/lib/magento/client";
-import { getCart } from "@/lib/magento/cart";
+import { getCart, pickupStoreName } from "@/lib/magento/cart";
 import { getAreas, type AddressInput } from "@/lib/magento/checkout";
 import {
   customerMobile,
@@ -99,6 +99,7 @@ export default async function CheckoutPage({
             governorates={governorates}
             prefill={prefill}
             saved={saved}
+            preferPickup={cart.items.some((i) => pickupStoreName(i) !== null)}
             dict={{
               addresses: dict.addresses,
               checkout: dict.checkout,

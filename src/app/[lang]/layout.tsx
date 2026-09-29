@@ -4,6 +4,8 @@ import { dir, hasLocale, locales } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CartDrawerProvider } from "@/components/cart/CartDrawer";
+import { imageHosts } from "@/lib/media";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -34,11 +36,17 @@ export default async function LocaleLayout({
   return (
     <html lang={lang} dir={dir(lang)} className="h-full antialiased">
       <body className="flex min-h-full flex-col">
-        <Header locale={lang} dict={dict} />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-          {children}
-        </main>
-        <Footer dict={dict} />
+        <CartDrawerProvider
+          locale={lang}
+          dict={{ miniCart: dict.miniCart, cart: dict.cart, delivery: dict.delivery }}
+          imageHosts={imageHosts()}
+        >
+          <Header locale={lang} dict={dict} />
+          <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
+            {children}
+          </main>
+          <Footer locale={lang} dict={dict} />
+        </CartDrawerProvider>
       </body>
     </html>
   );

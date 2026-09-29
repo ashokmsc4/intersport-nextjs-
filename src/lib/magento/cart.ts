@@ -25,7 +25,24 @@ export type CartItem = {
   image: string | null;
   is_salable: boolean;
   remaining_qty?: number;
+  /** "home_delivery" or the pickup store's location id. */
+  source_code?: string | number;
+  availableStoreDetails?: {
+    items?: { location: { id: string; name: string } }[];
+  };
 };
+
+export const HOME_DELIVERY = "home_delivery";
+
+/** Pickup store name for a Click & Collect line, or null for home delivery. */
+export function pickupStoreName(item: CartItem) {
+  const source = String(item.source_code ?? HOME_DELIVERY);
+  if (source === HOME_DELIVERY) return null;
+  return (
+    item.availableStoreDetails?.items?.find((s) => String(s.location.id) === source)
+      ?.location.name ?? null
+  );
+}
 
 export type CartTotals = {
   total: string;
@@ -52,8 +69,9 @@ type CartListResponse = {
   quote_id?: string;
 }[];
 
-// Every cart request carries the store's fulfilment source (required by the backend).
-const SOURCE_CODE = "home_delivery";
+// Every cart request carries a fulfilment source (required by the backend's
+// Amasty store pickup plugin): "home_delivery" or a pickup store's location id.
+const SOURCE_CODE = HOME_DELIVERY;
 
 const auth = (ref: CartRef) =>
   ref.kind === "customer"
@@ -137,6 +155,8 @@ export async function getCart(locale: Locale, ref: CartRef): Promise<Cart> {
 export type AddItemInput = {
   sku: string;
   qty: number;
+  /** Pickup store location id for Click & Collect; home delivery by default. */
+  sourceCode?: string;
   /** For a size of a configurable product: parent SKU plus chosen options. */
   configurable?: {
     parentSku: string;
@@ -161,13 +181,13 @@ export function addItem(
             configurable_item_options: input.configurable.options,
           },
         },
-        extension_attributes: { source_code: SOURCE_CODE },
+        extension_attributes: { source_code: input.sourceCode ?? SOURCE_CODE },
       }
     : {
         sku: input.sku,
         qty: input.qty,
         quote_id: ref.kind === "guest" ? ref.maskedId : quoteId,
-        extension_attributes: { source_code: SOURCE_CODE },
+        extension_attributes: { source_code: input.sourceCode ?? SOURCE_CODE },
       };
 
   return magentoRest<{ item_id: number }>(`${basePath(ref)}/items`, {
@@ -182,7 +202,7 @@ export function updateItemQty(
   locale: Locale,
   ref: CartRef,
   quoteId: string,
-  item: { itemId: string; sku: string; qty: number },
+  item: { itemId: string; sku: string; qty: number; sourceCode?: string },
 ) {
   return magentoRest(`${basePath(ref)}/items/${item.itemId}`, {
     locale,
@@ -193,7 +213,7 @@ export function updateItemQty(
         sku: item.sku,
         qty: item.qty,
         quote_id: ref.kind === "guest" ? ref.maskedId : quoteId,
-        extension_attributes: { source_code: SOURCE_CODE },
+        extension_attributes: { source_code: item.sourceCode ?? SOURCE_CODE },
       },
     },
   });
@@ -256,6 +276,7 @@ export async function mergeGuestCart(
     await addItem(locale, customerRef, current.quoteId, {
       sku: item.sku,
       qty: Number(item.qty),
+      sourceCode: String(item.source_code ?? SOURCE_CODE),
     }).catch((error) =>
       console.error(`[cart] could not move ${item.sku} to customer:`, error),
     );

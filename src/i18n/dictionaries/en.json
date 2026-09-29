@@ -22,7 +22,30 @@
     "endsOn": "Ends {date}"
   },
   "footer": {
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "freeDelivery": "Free Delivery",
+    "freeReturns": "Free 30 Day Returns",
+    "cod": "Cash On Delivery",
+    "secure": "Your Information Is Secure",
+    "customerService": "Customer Service",
+    "about": "About Intersport",
+    "contact": "Contact Us",
+    "contactUs": "Contact Us",
+    "faq": "FAQ's",
+    "trackOrders": "Track Orders",
+    "deliveryInfo": "Delivery Information",
+    "internationalShipping": "International Shipping",
+    "returns": "Return & Exchange Policy",
+    "freePickup": "Free Pickup",
+    "aboutUs": "About Us",
+    "points": "Points Program",
+    "giftCard": "Gift Card",
+    "blogs": "Blogs",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "account": "My Account",
+    "address": "AAW Head Office Building, Al-Soor Street, Sharq, Kuwait",
+    "followUs": "Follow us"
   },
   "category": {
     "results": "{count} products",
@@ -183,5 +206,30 @@
     "apply": "Apply",
     "clear": "Clear all",
     "showFilters": "Filters"
+  },
+  "delivery": {
+    "title": "How do you want it?",
+    "home": "Home delivery",
+    "homeNote": "Delivered to your address",
+    "pickup": "Click & Collect",
+    "pickupNote": "Free pickup from a store",
+    "chooseStore": "Choose a store",
+    "inStock": "{qty} in stock",
+    "today": "Today: {hours}",
+    "noStores": "Not available for pickup",
+    "loadingStores": "Checking stores…",
+    "chooseSizeFirst": "Choose a size to see stores",
+    "pickupFrom": "Pickup: {store}",
+    "homeUnavailable": "Home delivery isn't available for this item"
+  },
+  "miniCart": {
+    "title": "Your bag",
+    "close": "Close",
+    "empty": "Your bag is empty.",
+    "viewCart": "View bag",
+    "checkout": "Checkout",
+    "subtotal": "Subtotal",
+    "added": "Added to your bag",
+    "loading": "Loading…"
   }
 }
