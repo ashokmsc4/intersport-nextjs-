@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* Replace with Intersport brand tokens once the design is confirmed. */
+/* Intersport brand colours, taken from the official logo. */
 @theme {
-  --color-brand: #0033a0;
-  --color-brand-accent: #e30613;
+  --color-brand: #11448f;
+  --color-brand-accent: #e30f1b;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic",
     Tahoma, sans-serif;
 }

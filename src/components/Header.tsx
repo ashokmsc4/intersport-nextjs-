@@ -21,8 +21,16 @@ export async function Header({
   return (
     <header className="border-b border-neutral-200">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-        <Link href={`/${locale}`} className="text-xl font-extrabold text-brand">
-          {dict.site.name}
+        <Link href={`/${locale}`} className="shrink-0">
+          {/* Official Intersport logo, from the Magento theme (images/logo.svg). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/intersport-logo.svg"
+            alt={dict.site.name}
+            width={170}
+            height={18}
+            className="h-auto w-32 sm:w-44"
+          />
         </Link>
         <form
           action={`/${locale}/search`}
@@ -43,7 +51,7 @@ export async function Header({
             {dict.nav.searchButton}
           </button>
         </form>
-        <nav className="flex items-center gap-4 text-sm">
+        <nav className="flex items-center gap-3 text-sm whitespace-nowrap sm:gap-4">
           <Link href={`/${locale}/search`} className="md:hidden">
             {dict.nav.search}
           </Link>
