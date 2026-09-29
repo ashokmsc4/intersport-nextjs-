@@ -21,5 +21,13 @@
     "empty": "لا توجد منتجات في هذه الفئة حالياً.",
     "previous": "السابق",
     "next": "التالي"
+  },
+  "product": {
+    "sku": "رمز المنتج",
+    "size": "المقاس",
+    "inStock": "متوفر",
+    "outOfStock": "غير متوفر",
+    "description": "الوصف",
+    "youMightAlsoLike": "قد يعجبك أيضاً"
   }
 }

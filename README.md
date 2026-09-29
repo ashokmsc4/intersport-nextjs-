@@ -51,7 +51,8 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 - [x] Project setup, locale routing, Magento REST client
 - [x] Home page category grid, category page with products and pagination
 - [ ] Category filters and sorting (`V1/m2-attributes`)
-- [ ] Product detail page (configurable products, gallery)
+- [x] Product detail page (gallery, price, sizes, recommendations)
+- [ ] Add to cart and size selection
 - [ ] Search
 - [ ] Cart and checkout (shipping, payment gateways)
 - [ ] Customer account (login, orders, addresses, wishlist)

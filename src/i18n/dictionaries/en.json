@@ -21,5 +21,13 @@
     "empty": "No products in this category yet.",
     "previous": "Previous",
     "next": "Next"
+  },
+  "product": {
+    "sku": "Item code",
+    "size": "Size",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "description": "Description",
+    "youMightAlsoLike": "You might also like"
   }
 }

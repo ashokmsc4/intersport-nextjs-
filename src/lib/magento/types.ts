@@ -48,3 +48,40 @@ export type SearchResult<T> = {
   items: T[];
   total_count: number;
 };
+
+/** Attribute on `V1/aaw/productdetail` items; `label` holds the option text when known. */
+export type DetailAttribute = {
+  attribute_code: string;
+  value: string;
+  label?: string;
+};
+
+/** Item from `V1/aaw/productdetail/{id}` and `V1/mstore/recommend-products/sku/{sku}`. */
+export type ProductDetail = {
+  id: string;
+  sku: string;
+  name: string;
+  image: string | null;
+  brand: string | null;
+  type_id: string;
+  /** Image paths relative to /media/catalog/product. */
+  media_gallery_entries?: string[];
+  price: string;
+  special_price?: string | null;
+  special_from_date?: string | null;
+  special_to_date?: string | null;
+  visibility: string;
+  stock: number;
+  item_is_salable: boolean;
+  custom_attributes: DetailAttribute[];
+  /** Simple child products of a configurable product (one per size). */
+  childrens?: ProductDetail[];
+  related?: ProductDetail[];
+  description?: string | null;
+};
+
+/** Attribute definition file such as `data/attribute_size.json`. */
+export type AttributeDefinition = {
+  attribute_code: string;
+  options?: { label: string; value: string }[];
+};

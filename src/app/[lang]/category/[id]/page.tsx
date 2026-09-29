@@ -8,7 +8,7 @@ import {
   getCategoryProducts,
   visibleChildren,
 } from "@/lib/magento/catalog";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductCard, cardFromListItem } from "@/components/ProductCard";
 
 const PAGE_SIZE = 24;
 
@@ -82,7 +82,7 @@ export default async function CategoryPage({
           <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
             {result.items.map((product) => (
               <li key={product.id}>
-                <ProductCard product={product} locale={locale} />
+                <ProductCard product={cardFromListItem(product)} locale={locale} />
               </li>
             ))}
           </ul>

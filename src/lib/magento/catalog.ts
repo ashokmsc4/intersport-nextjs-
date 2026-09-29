@@ -1,7 +1,14 @@
 import "server-only";
 import type { Locale } from "@/i18n/config";
 import { magentoAppSettings, magentoRest } from "./client";
-import type { Category, CustomAttribute, Product, SearchResult } from "./types";
+import type {
+  AttributeDefinition,
+  Category,
+  CustomAttribute,
+  Product,
+  ProductDetail,
+  SearchResult,
+} from "./types";
 
 /** Visible, in-menu top-level categories, sorted by position. */
 export async function getMenuCategories(locale: Locale): Promise<Category[]> {
@@ -71,4 +78,49 @@ export function attr(
 ): string | undefined {
   const value = attributes.find((a) => a.attribute_code === code)?.value;
   return Array.isArray(value) ? value.join(",") : value;
+}
+
+export async function getProductDetail(
+  locale: Locale,
+  id: number,
+): Promise<ProductDetail | null> {
+  const data = await magentoRest<{ product_detail?: ProductDetail[] }>(
+    `V1/aaw/productdetail/${id}`,
+    { locale, tags: [`product:${id}`] },
+  );
+  return data.product_detail?.[0] ?? null;
+}
+
+export function getRecommendations(locale: Locale, sku: string) {
+  return magentoRest<ProductDetail[]>(
+    `V1/mstore/recommend-products/sku/${encodeURIComponent(sku)}`,
+    { locale, tags: [`recommendations:${sku}`] },
+  );
+}
+
+/** Map of size option id -> label, from the `attribute_size.json` settings file. */
+export async function getSizeLabels(locale: Locale) {
+  const def = await magentoAppSettings<AttributeDefinition>(
+    "data/attribute_size.json",
+    { locale, versioned: true },
+  );
+  return new Map((def.options ?? []).map((o) => [String(o.value), o.label]));
+}
+
+/** Price to charge now, taking an active special price into account. */
+export function effectivePrice(product: {
+  price: string | number;
+  special_price?: string | number | null;
+  special_from_date?: string | null;
+  special_to_date?: string | null;
+}) {
+  const price = Number(product.price);
+  const special = Number(product.special_price);
+  const now = Date.now();
+  const started =
+    !product.special_from_date || Date.parse(product.special_from_date) <= now;
+  const notEnded =
+    !product.special_to_date || Date.parse(product.special_to_date) >= now;
+  const onSale = special > 0 && special < price && started && notEnded;
+  return { price, final: onSale ? special : price, onSale };
 }
