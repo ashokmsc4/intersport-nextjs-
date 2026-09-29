@@ -14,17 +14,29 @@ import type { AddressInput } from "@/lib/magento/checkout";
 import { formatPrice } from "@/lib/format";
 import { CartTotals } from "@/components/cart/CartTotals";
 import { Field, FormError, buttonClass } from "@/components/forms/Field";
+import { AreaSelect, type Governorate } from "@/components/account/AreaSelect";
 
-type Governorate = {
-  governorate: string;
-  areas: { area: string; area_name: string }[];
-};
+/** A saved address already mapped to checkout fields, with a display label. */
+export type SavedChoice = { id: string; label: string; address: Partial<AddressInput> };
 
 const emptyAddress: AddressInput = {
   firstname: "",
   lastname: "",
   email: "",
   telephone: "",
+  governorate: "",
+  areaId: "",
+  areaName: "",
+  block: "",
+  street: "",
+  avenue: "",
+  house: "",
+  floor: "",
+  apartment: "",
+};
+
+/** Delivery fields cleared when switching between saved addresses. */
+const emptyDelivery: Partial<AddressInput> = {
   governorate: "",
   areaId: "",
   areaName: "",
@@ -44,12 +56,14 @@ export function CheckoutForm({
   locale,
   governorates,
   prefill,
+  saved = [],
   dict,
 }: {
   locale: Locale;
   governorates: Governorate[];
   prefill: Partial<AddressInput>;
-  dict: Pick<Dictionary, "checkout" | "account" | "cart" | "errors">;
+  saved?: SavedChoice[];
+  dict: Pick<Dictionary, "checkout" | "account" | "cart" | "errors" | "addresses">;
 }) {
   const router = useRouter();
   const t = dict.checkout;
@@ -67,8 +81,6 @@ export function CheckoutForm({
 
   const set = (key: keyof AddressInput) => (value: string) =>
     setAddress((a) => ({ ...a, [key]: value }));
-  const areas =
-    governorates.find((g) => g.governorate === address.governorate)?.areas ?? [];
 
   function submitAddress(e: React.FormEvent) {
     e.preventDefault();
@@ -234,54 +246,33 @@ export function CheckoutForm({
 
       <section className="flex flex-col gap-4">
         <h2 className="font-semibold">{t.delivery}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        {saved.length > 0 && (
           <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">{t.governorate}</span>
+            <span className="font-medium">{dict.addresses.useSaved}</span>
             <select
-              value={address.governorate}
-              onChange={(e) =>
-                setAddress((a) => ({
-                  ...a,
-                  governorate: e.target.value,
-                  areaId: "",
-                  areaName: "",
-                }))
-              }
-              required
-              className="rounded border border-neutral-300 px-3 py-2 text-base"
-            >
-              <option value="" disabled />
-              {governorates.map((g) => (
-                <option key={g.governorate} value={g.governorate}>
-                  {g.governorate}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">{t.area}</span>
-            <select
-              value={address.areaId}
+              defaultValue=""
               onChange={(e) => {
-                const area = areas.find((a) => a.area === e.target.value);
-                setAddress((a) => ({
-                  ...a,
-                  areaId: area?.area ?? "",
-                  areaName: area?.area_name ?? "",
-                }));
+                const choice = saved.find((c) => c.id === e.target.value);
+                setAddress((a) => ({ ...a, ...emptyDelivery, ...choice?.address }));
               }}
-              disabled={!address.governorate}
-              required
               className="rounded border border-neutral-300 px-3 py-2 text-base"
             >
-              <option value="">{t.chooseArea}</option>
-              {areas.map((a) => (
-                <option key={a.area} value={a.area}>
-                  {a.area_name}
+              <option value="">{dict.addresses.newAddress}</option>
+              {saved.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
                 </option>
               ))}
             </select>
           </label>
+        )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <AreaSelect
+            governorates={governorates}
+            value={address}
+            onChange={(area) => setAddress((a) => ({ ...a, ...area }))}
+            labels={{ governorate: t.governorate, area: t.area, chooseArea: t.chooseArea }}
+          />
           <Field label={t.block} value={address.block} onChange={(e) => set("block")(e.target.value)} required />
           <Field label={t.street} value={address.street} onChange={(e) => set("street")(e.target.value)} required />
           <Field label={t.avenue} value={address.avenue} onChange={(e) => set("avenue")(e.target.value)} />

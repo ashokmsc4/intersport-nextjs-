@@ -36,6 +36,12 @@ export default async function LoginPage({
         dict={{ account: dict.account, errors: dict.errors }}
         redirectTo={next}
       />
+      <Link
+        href={`/${lang}/account/forgot-password`}
+        className="mt-4 inline-block text-sm text-brand underline"
+      >
+        {dict.account.forgot}
+      </Link>
       <p className="mt-6 text-sm">
         {dict.account.noAccount}{" "}
         <Link

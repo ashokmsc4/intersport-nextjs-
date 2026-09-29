@@ -10,7 +10,9 @@
     "switchLanguage": "العربية",
     "login": "Sign in",
     "logout": "Sign out",
-    "hello": "Hi, {name}"
+    "hello": "Hi, {name}",
+    "searchPlaceholder": "Search products",
+    "searchButton": "Search"
   },
   "home": {
     "shopByCategory": "Shop by category",
@@ -65,7 +67,17 @@
     "haveAccount": "Already have an account?",
     "myAccount": "My account",
     "welcome": "Welcome, {name}",
-    "details": "Account details"
+    "details": "Account details",
+    "overview": "Overview",
+    "orders": "My orders",
+    "addresses": "Addresses",
+    "forgot": "Forgot your password?",
+    "resetTitle": "Reset your password",
+    "resetIntro": "Enter your email and we'll send you a link to reset your password.",
+    "sendLink": "Send reset link",
+    "sending": "Sending…",
+    "resetSent": "If an account exists for {email}, we've sent a password reset link to it.",
+    "backToLogin": "Back to sign in"
   },
   "cart": {
     "title": "Your cart",
@@ -126,5 +138,50 @@
     "choosePayment": "Choose a payment method.",
     "sessionExpired": "Your session expired. Please sign in again.",
     "generic": "Something went wrong. Please try again."
+  },
+  "orders": {
+    "title": "My orders",
+    "none": "You haven't placed any orders yet.",
+    "order": "Order",
+    "date": "Date",
+    "status": "Status",
+    "total": "Total",
+    "view": "View",
+    "items": "Items",
+    "qty": "Qty",
+    "payment": "Payment",
+    "deliverTo": "Delivery address",
+    "back": "All orders",
+    "shipping": "Shipping",
+    "notFound": "Order not found."
+  },
+  "addresses": {
+    "title": "Saved addresses",
+    "none": "No saved addresses yet.",
+    "add": "Add a new address",
+    "save": "Save address",
+    "saving": "Saving…",
+    "delete": "Delete",
+    "default": "Default",
+    "makeDefault": "Use as my default address",
+    "useSaved": "Use a saved address",
+    "newAddress": "Enter a new address"
+  },
+  "search": {
+    "title": "Search",
+    "resultsFor": "Results for “{q}”",
+    "noResults": "No products match “{q}”.",
+    "prompt": "What are you looking for?"
+  },
+  "filters": {
+    "title": "Filters",
+    "sortBy": "Sort by",
+    "recommended": "Recommended",
+    "newest": "Newest",
+    "priceLow": "Price: low to high",
+    "priceHigh": "Price: high to low",
+    "apply": "Apply",
+    "clear": "Clear all",
+    "showFilters": "Filters"
   }
 }

@@ -24,7 +24,29 @@ export async function Header({
         <Link href={`/${locale}`} className="text-xl font-extrabold text-brand">
           {dict.site.name}
         </Link>
+        <form
+          action={`/${locale}/search`}
+          role="search"
+          className="hidden flex-1 md:flex md:max-w-md"
+        >
+          <input
+            type="search"
+            name="q"
+            aria-label={dict.nav.searchPlaceholder}
+            placeholder={dict.nav.searchPlaceholder}
+            className="w-full rounded-s border border-neutral-300 px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            className="rounded-e bg-brand px-4 text-sm font-semibold text-white"
+          >
+            {dict.nav.searchButton}
+          </button>
+        </form>
         <nav className="flex items-center gap-4 text-sm">
+          <Link href={`/${locale}/search`} className="md:hidden">
+            {dict.nav.search}
+          </Link>
           <Link href={name ? `/${locale}/account` : `/${locale}/account/login`}>
             {name ? dict.nav.hello.replace("{name}", name) : dict.nav.login}
           </Link>

@@ -6,9 +6,13 @@ import { getDictionary } from "@/i18n/dictionaries";
 import {
   getCategory,
   getCategoryProducts,
+  getFilters,
+  parseSort,
+  selectedFilters,
   visibleChildren,
 } from "@/lib/magento/catalog";
-import { ProductCard, cardFromListItem } from "@/components/ProductCard";
+import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { ProductResults } from "@/components/catalog/ProductResults";
 
 const PAGE_SIZE = 24;
 
@@ -34,19 +38,25 @@ export default async function CategoryPage({
 }: PageProps<"/[lang]/category/[id]">) {
   const { lang, id } = await params;
   const { locale, category } = await load(lang, id);
-  const dict = await getDictionary(locale);
+  const query = await searchParams;
+  const [dict, groups] = await Promise.all([
+    getDictionary(locale),
+    getFilters(locale, category.id).catch(() => []),
+  ]);
 
-  const pageParam = (await searchParams).page;
-  const page = Math.max(1, Number(pageParam) || 1);
+  const page = Math.max(1, Number(query.page) || 1);
+  const sort = parseSort(query.sort);
+  const filters = selectedFilters(query, groups);
   const result = await getCategoryProducts(locale, {
     categoryId: category.id,
+    filters,
+    sort,
     page,
     pageSize: PAGE_SIZE,
   }).catch((error) => {
     console.error(`[magento] category ${category.id} products:`, error);
     return null;
   });
-  const totalPages = result ? Math.ceil(result.total_count / PAGE_SIZE) : 0;
   const subcategories = visibleChildren(category);
 
   return (
@@ -68,39 +78,35 @@ export default async function CategoryPage({
         </ul>
       )}
 
-      {result === null ? (
-        <p className="rounded border border-amber-300 bg-amber-50 p-4 text-amber-900">
-          {dict.home.backendUnavailable}
-        </p>
-      ) : result.items.length === 0 ? (
-        <p>{dict.category.empty}</p>
-      ) : (
-        <>
-          <p className="mb-4 text-sm text-neutral-500">
-            {dict.category.results.replace("{count}", String(result.total_count))}
-          </p>
-          <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {result.items.map((product) => (
-              <li key={product.sku}>
-                <ProductCard product={cardFromListItem(product)} locale={locale} />
-              </li>
-            ))}
-          </ul>
-          {totalPages > 1 && (
-            <nav className="mt-8 flex items-center justify-center gap-4 text-sm">
-              {page > 1 && (
-                <Link href={`?page=${page - 1}`}>{dict.category.previous}</Link>
-              )}
-              <span>
-                {page} / {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link href={`?page=${page + 1}`}>{dict.category.next}</Link>
-              )}
-            </nav>
+      <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
+        <aside>
+          <FilterPanel
+            groups={groups}
+            selected={filters}
+            sort={sort}
+            clearHref={`/${locale}/category/${category.id}`}
+            dict={dict}
+          />
+        </aside>
+        <div>
+          {result === null ? (
+            <p className="rounded border border-amber-300 bg-amber-50 p-4 text-amber-900">
+              {dict.home.backendUnavailable}
+            </p>
+          ) : result.items.length === 0 ? (
+            <p>{dict.category.empty}</p>
+          ) : (
+            <ProductResults
+              locale={locale}
+              dict={dict}
+              result={result}
+              page={page}
+              pageSize={PAGE_SIZE}
+              params={query}
+            />
           )}
-        </>
-      )}
+        </div>
+      </div>
     </section>
   );
 }

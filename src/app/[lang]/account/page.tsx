@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { MagentoError } from "@/lib/magento/client";
-import { customerMobile, getCustomer } from "@/lib/magento/customer";
-import { getCustomerToken } from "@/lib/session";
+import { customerMobile } from "@/lib/magento/customer";
+import { requireCustomer } from "@/lib/shopper";
 import { logoutAction } from "@/app/actions/auth";
+import { AccountNav } from "@/components/account/AccountNav";
 
 export async function generateMetadata({
   params,
@@ -20,24 +20,16 @@ export default async function AccountPage({
 }: PageProps<"/[lang]/account">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
-  const loginUrl = `/${lang}/account/login?next=/${lang}/account`;
-  const token = await getCustomerToken();
-  if (!token) redirect(loginUrl);
-
-  const customer = await getCustomer(lang, token).catch((error) => {
-    // Expired token: send the shopper back to sign in.
-    if (error instanceof MagentoError && error.status === 401) return null;
-    throw error;
-  });
-  if (!customer) redirect(loginUrl);
+  const { customer } = await requireCustomer(lang, `/${lang}/account`);
   const dict = await getDictionary(lang);
   const t = dict.account;
 
   return (
-    <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-2xl font-bold">
+    <div className="mx-auto max-w-2xl">
+      <h1 className="mb-4 text-2xl font-bold">
         {t.welcome.replace("{name}", customer.firstname)}
       </h1>
+      <AccountNav locale={lang} dict={dict} current="overview" />
       <section className="rounded-lg border border-neutral-200 p-4">
         <h2 className="mb-3 font-semibold">{t.details}</h2>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -50,7 +42,9 @@ export default async function AccountPage({
           {customerMobile(customer) && (
             <>
               <dt className="text-neutral-500">{t.mobile}</dt>
-              <dd dir="ltr">{customerMobile(customer)}</dd>
+              <dd dir="ltr" className="text-start">
+                {customerMobile(customer)}
+              </dd>
             </>
           )}
         </dl>

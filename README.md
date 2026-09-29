@@ -52,12 +52,17 @@ Endpoints in use:
 |---|---|
 | Home sections | `settings/config.json` → `HorizonLayout` (banners, category carousel, product rails); falls back to the English file |
 | Category tree, menu | `/media/mobile-app/intersport/{store}/data/categories.json` |
-| Category products | `V1/mstore/products` (configurable items list with price 0; `minimal_price` is used) |
+| Category products | `V1/mstore/products` (configurable items list with price 0; `minimal_price` is used); filters and sorting via `filter_groups` / `sortOrders` |
+| Category filters | `V1/m2-attributes?category_id=` (brands, sports, department, sizes, product type) |
+| Search | one word or SKU: `V1/mstore/products` name/SKU `like`; several words: `V1/search` (full-text, relevance order) then the products by id |
 | Product page | `V1/aaw/productdetail/{sku}` (looked up by SKU; sizes and colours come from `childrens`) |
 | You might also like | `V1/mstore/recommend-products/sku/{sku}` |
 | Sign in / sign up | `V1/integration/customer/token`, `V1/customers` (needs `dob`, `gender`, `mobilenumber`), `V1/customers/me` |
 | Cart | `V1/guest-carts/…` or `V1/carts/mine/…` for items and coupons; `V1/cartlist/{id}` for the item list and totals |
 | Checkout | `V1/aaw/arealist` (governorates and areas), `V1/finalize-checkout` (shipping + payment options), `V1/do-checkout` (places the order) |
+| Order history | `V1/mstore/me/orders` (scoped to the customer token; detail = same list filtered by `increment_id`) |
+| Saved addresses | `V3/customer/address/{customerId}` (list), `V3/customer/address` (create), `V3/customer/address/{addressId}` (delete) |
+| Password reset | `V1/customers/password` (Magento emails a reset link; `MAGENTO_WEBSITE_ID`, default 3) |
 
 ### Session
 
@@ -77,6 +82,11 @@ the customer when their cart is empty, otherwise its items are added to the cust
 - `do-checkout` returns a gateway `payment_url` whose success/failure URLs point back to Magento, not to this
   storefront; the backend needs to support a web return URL.
 - `V1/cartlist/{quoteId}` returns a customer's cart without authentication.
+- `V3/customer/address/{customerId}` returns any customer's addresses to any signed-in customer. The storefront
+  only requests the signed-in customer's own id and checks ownership before deleting, but the API must be fixed.
+- `V1/mstore/products` doesn't do a plain "contains" match for text with spaces, and `V1/search` relevance on
+  staging is weak (words are ORed); search quality depends on the backend's search configuration.
+- The password reset email links to the Magento website to set the new password.
 
 Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 
@@ -91,7 +101,10 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 - [x] Add to cart for guests and customers (guest cart moves to the customer on sign-in)
 - [x] Cart page (quantity, remove, coupon, totals)
 - [x] Checkout (Kuwait address, delivery method, payment method, place order)
-- [ ] Payment return pages and order history
-- [ ] Search
-- [ ] Saved addresses, wishlist, password reset
+- [x] Order history and order detail
+- [x] Saved addresses (account page and checkout)
+- [x] Password reset request
+- [x] Search, category filters and sorting
+- [ ] Payment return pages (needs backend support)
+- [ ] Wishlist, change password, order cancellation
 - [ ] CMS pages, SEO redirects from existing Magento URLs

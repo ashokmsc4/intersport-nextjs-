@@ -6,10 +6,16 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { productImageUrl } from "@/lib/magento/client";
 import { getCart } from "@/lib/magento/cart";
 import { getAreas, type AddressInput } from "@/lib/magento/checkout";
-import { customerMobile, getCustomer } from "@/lib/magento/customer";
+import {
+  customerMobile,
+  getAddresses,
+  getCustomer,
+  type SavedAddress,
+} from "@/lib/magento/customer";
+import { addressLine } from "@/lib/addresses";
 import { formatPrice } from "@/lib/format";
 import { currentCartRef } from "@/lib/shopper";
-import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { CheckoutForm, type SavedChoice } from "@/components/checkout/CheckoutForm";
 
 export async function generateMetadata({
   params,
@@ -36,6 +42,31 @@ export default async function CheckoutPage({
       ? getCustomer(lang, ref.token).catch(() => null)
       : Promise.resolve(null),
   ]);
+  const addresses: SavedAddress[] =
+    ref.kind === "customer" && customer
+      ? await getAddresses(lang, ref.token, customer.id).catch(() => [])
+      : [];
+  // Default address first, mapped onto the checkout fields.
+  const saved: SavedChoice[] = [...addresses]
+    .sort((a, b) => b.is_default_shipping - a.is_default_shipping)
+    .map((a) => ({
+      id: a.address_id,
+      label: addressLine(a, dict.checkout),
+      address: {
+        firstname: a.firstname,
+        lastname: a.lastname,
+        telephone: a.telephone,
+        governorate: a.region,
+        areaId: a.city_id,
+        areaName: a.city,
+        block: a.block,
+        street: a.street,
+        avenue: a.address_line_1,
+        house: a.building_number ?? "",
+        floor: a.floor_number ?? "",
+        apartment: a.apartment_number ?? "",
+      },
+    }));
   const prefill: Partial<AddressInput> = customer
     ? {
         firstname: customer.firstname,
@@ -66,7 +97,9 @@ export default async function CheckoutPage({
             locale={lang}
             governorates={governorates}
             prefill={prefill}
+            saved={saved}
             dict={{
+              addresses: dict.addresses,
               checkout: dict.checkout,
               account: dict.account,
               cart: dict.cart,
