@@ -10,6 +10,7 @@ import {
   getRecommendations,
 } from "@/lib/magento/catalog";
 import type { ProductDetail } from "@/lib/magento/types";
+import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
 
@@ -47,25 +48,24 @@ function option(product: ProductDetail, code: string) {
   return product.custom_attributes.find((a) => a.attribute_code === code);
 }
 
-type SizeOption = {
-  sku: string;
-  label: string;
-  position: number;
-  available: boolean;
-};
+const sizePosition = (child: ProductDetail) =>
+  Number(option(child, "size")?.position ?? 0);
 
-function sizeOptions(product: ProductDetail): SizeOption[] {
-  return (product.childrens ?? [])
-    .map((child) => {
-      const size = option(child, "size");
-      return {
-        sku: child.sku,
-        label: size?.label || child.sku,
-        position: Number(size?.position ?? 0),
-        available: isAvailable(child),
-      };
-    })
-    .sort((a, b) => a.position - b.position);
+/** One choice per child product, in shop order, with the options add-to-cart needs. */
+function sizeOptions(product: ProductDetail): SizeChoice[] {
+  return [...(product.childrens ?? [])]
+    .sort((a, b) => sizePosition(a) - sizePosition(b))
+    .map((child) => ({
+      sku: child.sku,
+      label: option(child, "size")?.label || child.sku,
+      available: isAvailable(child),
+      options: child.custom_attributes
+        .filter((a) => a.attribute_id && a.value)
+        .map((a) => ({
+          option_id: String(a.attribute_id),
+          option_value: Number(a.value),
+        })),
+    }));
 }
 
 export default async function ProductPage({
@@ -135,33 +135,19 @@ export default async function ProductPage({
             </p>
           )}
 
-          {sizes.length > 0 && (
-            <section>
-              <h2 className="mb-2 text-sm font-semibold">
-                {dict.product.size}
-              </h2>
-              <ul className="flex flex-wrap gap-2">
-                {sizes.map((size) => (
-                  <li
-                    key={size.sku}
-                    className={`min-w-12 rounded border px-3 py-2 text-center text-sm ${
-                      size.available
-                        ? "border-neutral-300"
-                        : "border-neutral-200 text-neutral-400 line-through"
-                    }`}
-                  >
-                    {size.label}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           <p
             className={`text-sm font-medium ${inStock ? "text-green-700" : "text-brand-accent"}`}
           >
             {inStock ? dict.product.inStock : dict.product.outOfStock}
           </p>
+
+          <AddToCart
+            locale={locale}
+            sku={product.sku}
+            sizes={sizes}
+            inStock={inStock}
+            dict={{ product: dict.product, errors: dict.errors }}
+          />
 
           {product.description && (
             <section>

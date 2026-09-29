@@ -52,6 +52,8 @@ export type SearchResult<T> = {
 /** Attribute on `V1/aaw/productdetail` items; `label` holds the option text. */
 export type DetailAttribute = {
   attribute_code: string;
+  /** Needed as `option_id` when adding a configurable size to the cart. */
+  attribute_id?: string;
   value: string;
   label?: string;
   /** Sort order of the option (sizes come in shop order this way). */

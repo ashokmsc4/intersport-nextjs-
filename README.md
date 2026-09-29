@@ -22,9 +22,11 @@ npm run dev                  # http://localhost:3000
 ```
 src/
   app/[lang]/        # every route lives under the locale segment
-  components/        # shared UI
+  app/actions/       # server actions: auth, cart, checkout
+  components/        # shared UI (forms, cart, checkout)
   i18n/              # locale config and EN/AR dictionaries
-  lib/magento/       # REST client, catalog functions and types
+  lib/magento/       # REST client: catalog, home, customer, cart, checkout
+  lib/session.ts     # httpOnly cookies for customer token and guest cart
   proxy.ts           # redirects "/" and un-prefixed paths to /en or /ar
 ```
 
@@ -48,13 +50,33 @@ Endpoints in use:
 
 | Page | Source |
 |---|---|
-| Home, category tree | `/media/mobile-app/intersport/{store}/data/categories.json` |
+| Home sections | `settings/config.json` → `HorizonLayout` (banners, category carousel, product rails); falls back to the English file |
+| Category tree, menu | `/media/mobile-app/intersport/{store}/data/categories.json` |
 | Category products | `V1/mstore/products` (configurable items list with price 0; `minimal_price` is used) |
 | Product page | `V1/aaw/productdetail/{sku}` (looked up by SKU; sizes and colours come from `childrens`) |
 | You might also like | `V1/mstore/recommend-products/sku/{sku}` |
+| Sign in / sign up | `V1/integration/customer/token`, `V1/customers` (needs `dob`, `gender`, `mobilenumber`), `V1/customers/me` |
+| Cart | `V1/guest-carts/…` or `V1/carts/mine/…` for items and coupons; `V1/cartlist/{id}` for the item list and totals |
+| Checkout | `V1/aaw/arealist` (governorates and areas), `V1/finalize-checkout` (shipping + payment options), `V1/do-checkout` (places the order) |
 
-Staging notes: `productdetail` can take ~20s on a cold call, so responses are cached;
-`mstore/products` may return fewer items than `pageSize` while `total_count` stays correct.
+### Session
+
+Tokens live in httpOnly cookies (`src/lib/session.ts`): the customer token after sign-in, the masked guest
+cart id before it, plus the first name and cart count for the header. On sign-in a guest cart is assigned to
+the customer when their cart is empty, otherwise its items are added to the customer's cart.
+
+### Staging notes
+
+- `productdetail` can take ~20s on a cold call, so responses are cached.
+- `mstore/products` may return fewer items than `pageSize` while `total_count` stays correct.
+- There is no Arabic `settings/config.json`; the Arabic home page uses the English layout.
+- Cart updates must include `extension_attributes.source_code` (`home_delivery`).
+
+### Open backend questions
+
+- `do-checkout` returns a gateway `payment_url` whose success/failure URLs point back to Magento, not to this
+  storefront; the backend needs to support a web return URL.
+- `V1/cartlist/{quoteId}` returns a customer's cart without authentication.
 
 Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 
@@ -64,8 +86,12 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 - [x] Home page category grid, category page with products and pagination
 - [ ] Category filters and sorting (`V1/m2-attributes`)
 - [x] Product detail page (gallery, price, sizes, recommendations)
-- [ ] Add to cart and size selection
+- [x] Home page from the app configuration
+- [x] Sign in, sign up, sign out, account details
+- [x] Add to cart for guests and customers (guest cart moves to the customer on sign-in)
+- [x] Cart page (quantity, remove, coupon, totals)
+- [x] Checkout (Kuwait address, delivery method, payment method, place order)
+- [ ] Payment return pages and order history
 - [ ] Search
-- [ ] Cart and checkout (shipping, payment gateways)
-- [ ] Customer account (login, orders, addresses, wishlist)
+- [ ] Saved addresses, wishlist, password reset
 - [ ] CMS pages, SEO redirects from existing Magento URLs

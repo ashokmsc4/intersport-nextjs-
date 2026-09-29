@@ -14,6 +14,19 @@ const storeCodes: Record<Locale, string> = {
 
 export const storeCode = (locale: Locale) => storeCodes[locale];
 
+/** Magento messages use %1 / %name placeholders filled from `parameters`. */
+function fillParameters(
+  message: string,
+  parameters?: Record<string, string> | string[],
+) {
+  if (!parameters) return message;
+  const values: Record<string, string> = Array.isArray(parameters)
+    ? Object.fromEntries(parameters.map((v, i) => [String(i + 1), v]))
+    : parameters;
+  return message.replace(/%(\w+)/g, (match, key) => values[key] ?? match);
+}
+
+/** Error from the Magento API; `message` is safe to show to shoppers. */
 export class MagentoError extends Error {
   constructor(
     message: string,
@@ -41,6 +54,8 @@ type RestOptions = {
   headers?: Record<string, string>;
   /** Cache tags so webhooks can revalidate specific data. */
   tags?: string[];
+  /** Never cache (carts, checkout); implied for customer requests and non-GETs. */
+  noStore?: boolean;
 };
 
 async function request<T>(url: string, init: RequestInit): Promise<T> {
@@ -50,8 +65,11 @@ async function request<T>(url: string, init: RequestInit): Promise<T> {
   if (!res.ok) {
     let message = `Magento responded ${res.status}`;
     try {
-      const body = (await res.json()) as { message?: string };
-      if (body.message) message += `: ${body.message}`;
+      const body = (await res.json()) as {
+        message?: string;
+        parameters?: Record<string, string> | string[];
+      };
+      if (body.message) message = fillParameters(body.message, body.parameters);
     } catch {
       // Non-JSON error body; keep the status-only message.
     }
@@ -75,6 +93,7 @@ export function magentoRest<T>(
     query,
     headers: extraHeaders,
     tags,
+    noStore = false,
   }: RestOptions,
 ): Promise<T> {
   const headers: Record<string, string> = {
@@ -90,7 +109,7 @@ export function magentoRest<T>(
     headers.Authorization = `Bearer ${auth.token}`;
   }
 
-  const cacheable = method === "GET" && auth.type !== "customer";
+  const cacheable = method === "GET" && auth.type !== "customer" && !noStore;
   const qs = query?.toString();
   const url = `${BASE_URL}/rest/${storeCode(locale)}/${path.replace(/^\//, "")}${qs ? `?${qs}` : ""}`;
 
