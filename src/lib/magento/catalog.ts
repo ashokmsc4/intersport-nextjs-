@@ -2,7 +2,6 @@ import "server-only";
 import type { Locale } from "@/i18n/config";
 import { magentoAppSettings, magentoRest } from "./client";
 import type {
-  AttributeDefinition,
   Category,
   CustomAttribute,
   Product,
@@ -14,7 +13,6 @@ import type {
 export async function getMenuCategories(locale: Locale): Promise<Category[]> {
   const root = await magentoAppSettings<Category>("data/categories.json", {
     locale,
-    versioned: true,
   });
   return visibleChildren(root);
 }
@@ -28,7 +26,6 @@ export function visibleChildren(category: Category): Category[] {
 export async function getCategory(locale: Locale, id: number) {
   const root = await magentoAppSettings<Category>("data/categories.json", {
     locale,
-    versioned: true,
   });
   return findCategory(root, id);
 }
@@ -80,13 +77,14 @@ export function attr(
   return Array.isArray(value) ? value.join(",") : value;
 }
 
+/** Full product by SKU (the endpoint looks products up by SKU, not entity id). */
 export async function getProductDetail(
   locale: Locale,
-  id: number,
+  sku: string,
 ): Promise<ProductDetail | null> {
   const data = await magentoRest<{ product_detail?: ProductDetail[] }>(
-    `V1/aaw/productdetail/${id}`,
-    { locale, tags: [`product:${id}`] },
+    `V1/aaw/productdetail/${encodeURIComponent(sku)}`,
+    { locale, tags: [`product:${sku}`] },
   );
   return data.product_detail?.[0] ?? null;
 }
@@ -96,15 +94,6 @@ export function getRecommendations(locale: Locale, sku: string) {
     `V1/mstore/recommend-products/sku/${encodeURIComponent(sku)}`,
     { locale, tags: [`recommendations:${sku}`] },
   );
-}
-
-/** Map of size option id -> label, from the `attribute_size.json` settings file. */
-export async function getSizeLabels(locale: Locale) {
-  const def = await magentoAppSettings<AttributeDefinition>(
-    "data/attribute_size.json",
-    { locale, versioned: true },
-  );
-  return new Map((def.options ?? []).map((o) => [String(o.value), o.label]));
 }
 
 /** Price to charge now, taking an active special price into account. */

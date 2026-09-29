@@ -81,7 +81,7 @@ export default async function CategoryPage({
           </p>
           <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
             {result.items.map((product) => (
-              <li key={product.id}>
+              <li key={product.sku}>
                 <ProductCard product={cardFromListItem(product)} locale={locale} />
               </li>
             ))}

@@ -49,11 +49,13 @@ export type SearchResult<T> = {
   total_count: number;
 };
 
-/** Attribute on `V1/aaw/productdetail` items; `label` holds the option text when known. */
+/** Attribute on `V1/aaw/productdetail` items; `label` holds the option text. */
 export type DetailAttribute = {
   attribute_code: string;
   value: string;
   label?: string;
+  /** Sort order of the option (sizes come in shop order this way). */
+  position?: string;
 };
 
 /** Item from `V1/aaw/productdetail/{id}` and `V1/mstore/recommend-products/sku/{sku}`. */
@@ -71,17 +73,13 @@ export type ProductDetail = {
   special_from_date?: string | null;
   special_to_date?: string | null;
   visibility: string;
-  stock: number;
+  /** Present on simple products and children; absent on configurable parents. */
+  stock?: number;
   item_is_salable: boolean;
+  url?: string;
   custom_attributes: DetailAttribute[];
   /** Simple child products of a configurable product (one per size). */
   childrens?: ProductDetail[];
   related?: ProductDetail[];
   description?: string | null;
-};
-
-/** Attribute definition file such as `data/attribute_size.json`. */
-export type AttributeDefinition = {
-  attribute_code: string;
-  options?: { label: string; value: string }[];
 };

@@ -8,16 +8,14 @@ import {
   effectivePrice,
   getProductDetail,
   getRecommendations,
-  getSizeLabels,
 } from "@/lib/magento/catalog";
 import type { ProductDetail } from "@/lib/magento/types";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
 
-const loadProduct = cache(async (lang: string, id: string) => {
-  const productId = Number(id);
-  if (!hasLocale(lang) || !Number.isInteger(productId)) notFound();
-  const product = await getProductDetail(lang, productId).catch((error) => {
+const loadProduct = cache(async (lang: string, sku: string) => {
+  if (!hasLocale(lang) || !sku) notFound();
+  const product = await getProductDetail(lang, sku).catch((error) => {
     if (error instanceof MagentoError && error.status === 404) return null;
     throw error;
   });
@@ -27,10 +25,12 @@ const loadProduct = cache(async (lang: string, id: string) => {
 
 export async function generateMetadata({
   params,
-}: PageProps<"/[lang]/product/[id]">): Promise<Metadata> {
-  const { lang, id } = await params;
-  const { product } = await loadProduct(lang, id);
-  const image = productImageUrl(product.image);
+}: PageProps<"/[lang]/product/[sku]">): Promise<Metadata> {
+  const { lang, sku } = await params;
+  const { product } = await loadProduct(lang, decodeURIComponent(sku));
+  const image = productImageUrl(
+    product.media_gallery_entries?.[0] ?? product.image,
+  );
   return {
     title:
       product.brand && !product.name.startsWith(product.brand)
@@ -40,45 +40,60 @@ export async function generateMetadata({
   };
 }
 
-type SizeOption = { sku: string; label: string; available: boolean };
+const isAvailable = (p: ProductDetail) =>
+  p.item_is_salable && (p.stock === undefined || p.stock > 0);
 
-function sizeOptions(
-  product: ProductDetail,
-  labels: Map<string, string>,
-): SizeOption[] {
-  return (product.childrens ?? []).map((child) => {
-    const size = child.custom_attributes.find(
-      (a) => a.attribute_code === "size",
-    );
-    return {
-      sku: child.sku,
-      label: size?.label || labels.get(String(size?.value)) || child.sku,
-      available: child.item_is_salable && child.stock > 0,
-    };
-  });
+function option(product: ProductDetail, code: string) {
+  return product.custom_attributes.find((a) => a.attribute_code === code);
+}
+
+type SizeOption = {
+  sku: string;
+  label: string;
+  position: number;
+  available: boolean;
+};
+
+function sizeOptions(product: ProductDetail): SizeOption[] {
+  return (product.childrens ?? [])
+    .map((child) => {
+      const size = option(child, "size");
+      return {
+        sku: child.sku,
+        label: size?.label || child.sku,
+        position: Number(size?.position ?? 0),
+        available: isAvailable(child),
+      };
+    })
+    .sort((a, b) => a.position - b.position);
 }
 
 export default async function ProductPage({
   params,
-}: PageProps<"/[lang]/product/[id]">) {
-  const { lang, id } = await params;
-  const { locale, product } = await loadProduct(lang, id);
+}: PageProps<"/[lang]/product/[sku]">) {
+  const { lang, sku } = await params;
+  const { locale, product } = await loadProduct(lang, decodeURIComponent(sku));
   const dict = await getDictionary(locale);
 
-  const [labels, recommendations] = await Promise.all([
-    getSizeLabels(locale).catch(() => new Map<string, string>()),
-    getRecommendations(locale, product.sku).catch(() => [] as ProductDetail[]),
-  ]);
+  const recommendations = await getRecommendations(locale, product.sku).catch(
+    () => [] as ProductDetail[],
+  );
 
+  // Gallery paths are served from the storefront host; `image` is a fallback.
   const gallery = [
     ...new Set(
-      [product.image, ...(product.media_gallery_entries ?? [])]
+      [...(product.media_gallery_entries ?? []), product.image]
         .map(productImageUrl)
         .filter((url): url is string => Boolean(url)),
     ),
   ];
-  const sizes = sizeOptions(product, labels);
-  const inStock = product.item_is_salable && product.stock > 0;
+  const sizes = sizeOptions(product);
+  const color = product.childrens?.length
+    ? option(product.childrens[0], "color")?.label
+    : option(product, "color")?.label;
+  const inStock = sizes.length
+    ? sizes.some((s) => s.available)
+    : isAvailable(product);
 
   return (
     <article>
@@ -112,6 +127,13 @@ export default async function ProductPage({
           <p className="text-xs text-neutral-500">
             {dict.product.sku}: {product.sku}
           </p>
+
+          {color && (
+            <p className="text-sm">
+              <span className="font-semibold">{dict.product.color}:</span>{" "}
+              {color}
+            </p>
+          )}
 
           {sizes.length > 0 && (
             <section>
@@ -161,7 +183,7 @@ export default async function ProductPage({
           </h2>
           <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
             {recommendations.slice(0, 8).map((item) => (
-              <li key={item.id}>
+              <li key={item.sku}>
                 <ProductCard product={cardFromDetail(item)} locale={locale} />
               </li>
             ))}

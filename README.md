@@ -44,6 +44,18 @@ All Magento calls run on the server. The storefront endpoints don't need an inte
 | `intersport_en` | `/en` |
 | `intersport_ar` | `/ar` (RTL) |
 
+Endpoints in use:
+
+| Page | Source |
+|---|---|
+| Home, category tree | `/media/mobile-app/intersport/{store}/data/categories.json` |
+| Category products | `V1/mstore/products` (configurable items list with price 0; `minimal_price` is used) |
+| Product page | `V1/aaw/productdetail/{sku}` (looked up by SKU; sizes and colours come from `childrens`) |
+| You might also like | `V1/mstore/recommend-products/sku/{sku}` |
+
+Staging notes: `productdetail` can take ~20s on a cold call, so responses are cached;
+`mstore/products` may return fewer items than `pageSize` while `total_count` stays correct.
+
 Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 
 ## Roadmap

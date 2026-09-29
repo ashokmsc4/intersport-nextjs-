@@ -28,6 +28,7 @@
     "inStock": "In stock",
     "outOfStock": "Out of stock",
     "description": "Description",
-    "youMightAlsoLike": "You might also like"
+    "youMightAlsoLike": "You might also like",
+    "color": "Colour"
   }
 }

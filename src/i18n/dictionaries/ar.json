@@ -28,6 +28,7 @@
     "inStock": "متوفر",
     "outOfStock": "غير متوفر",
     "description": "الوصف",
-    "youMightAlsoLike": "قد يعجبك أيضاً"
+    "youMightAlsoLike": "قد يعجبك أيضاً",
+    "color": "اللون"
   }
 }

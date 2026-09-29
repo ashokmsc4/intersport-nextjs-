@@ -5,7 +5,7 @@ const BASE_URL = (process.env.MAGENTO_BASE_URL ?? "").replace(/\/$/, "");
 const REVALIDATE = Number(process.env.MAGENTO_REVALIDATE_SECONDS ?? 300);
 const SETTINGS_PATH =
   process.env.MAGENTO_APP_SETTINGS_PATH ?? "/media/mobile-app/intersport";
-const SETTINGS_VERSION = process.env.MAGENTO_APP_SETTINGS_VERSION ?? "2.0.1";
+const SETTINGS_VERSION = process.env.MAGENTO_APP_SETTINGS_VERSION ?? "";
 
 const storeCodes: Record<Locale, string> = {
   en: process.env.MAGENTO_STORE_CODE_EN ?? "intersport_en",
@@ -106,13 +106,15 @@ export function magentoRest<T>(
 
 /**
  * Reads one of the public mobile-app settings files, e.g. `settings/config.json`
- * or `data/categories.json`. Versioned files live under the settings version folder.
+ * or `data/categories.json`. When MAGENTO_APP_SETTINGS_VERSION is set, `data/`
+ * files are read from that version folder (production uses one, staging doesn't).
  */
 export function magentoAppSettings<T>(
   file: string,
-  { locale, versioned = false }: { locale: Locale; versioned?: boolean },
+  { locale }: { locale: Locale },
 ): Promise<T> {
-  const version = versioned ? `/${SETTINGS_VERSION}` : "";
+  const version =
+    SETTINGS_VERSION && file.startsWith("data/") ? `/${SETTINGS_VERSION}` : "";
   const url = `${BASE_URL}${SETTINGS_PATH}/${storeCode(locale)}${version}/${file}`;
   return request<T>(url, {
     headers: { Accept: "application/json" },
@@ -120,9 +122,19 @@ export function magentoAppSettings<T>(
   });
 }
 
-/** Absolute URL for a product image path such as `/p/h/file.jpg`. */
+/**
+ * Absolute URL for a product image path such as `/p/h/file.jpg`.
+ * Some endpoints return image URLs on the Magento admin host; the same /media
+ * files are served by the storefront host, so those are rewritten to it.
+ */
 export function productImageUrl(file: string | null | undefined) {
   if (!file) return null;
-  if (/^https?:\/\//.test(file)) return file;
+  if (/^https?:\/\//.test(file)) {
+    const url = new URL(file);
+    if (BASE_URL && url.hostname.startsWith("admin.")) {
+      return `${BASE_URL}${url.pathname}`;
+    }
+    return file;
+  }
   return `${BASE_URL}/media/catalog/product${file.startsWith("/") ? "" : "/"}${file}`;
 }
