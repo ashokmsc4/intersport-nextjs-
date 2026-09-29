@@ -16,6 +16,7 @@ import { addressLine } from "@/lib/addresses";
 import { formatPrice } from "@/lib/format";
 import { currentCartRef } from "@/lib/shopper";
 import { CheckoutForm, type SavedChoice } from "@/components/checkout/CheckoutForm";
+import { ProductImage } from "@/components/ProductImage";
 
 export async function generateMetadata({
   params,
@@ -114,12 +115,7 @@ export default async function CheckoutPage({
               const image = productImageUrl(item.image);
               return (
                 <li key={item.item_id} className="flex gap-3 text-sm">
-                  <div className="size-14 shrink-0 overflow-hidden rounded bg-neutral-100">
-                    {image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={image} alt="" className="size-full object-contain" />
-                    )}
-                  </div>
+                  <ProductImage src={image} alt="" sizes="56px" className="size-14 shrink-0 rounded" />
                   <p className="flex-1">
                     {item.name}
                     <span className="block text-neutral-500">× {item.qty}</span>

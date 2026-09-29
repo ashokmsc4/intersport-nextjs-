@@ -8,7 +8,10 @@ import {
   type HomeLink,
   type HomeSection,
 } from "@/lib/magento/home";
+import { Banner } from "@/components/Banner";
 import { ProductCard, cardFromListItem } from "@/components/ProductCard";
+import { ProductImage } from "@/components/ProductImage";
+import { productImageUrl } from "@/lib/magento/client";
 
 // Regenerate so a build without backend access does not freeze the error state.
 export const revalidate = 300;
@@ -96,19 +99,17 @@ function Section({
   switch (section.layout) {
     case "bannerImage":
       return (
-        <section className="grid gap-3">
+        // The app shows groups as a carousel; side by side reads better on wide screens.
+        <section
+          className={`grid gap-3 ${section.items.length > 1 ? "md:grid-cols-2" : ""}`}
+        >
           {section.items.map((item) => (
             <Linked
               key={item.image}
               href={linkHref(locale, item)}
               className="block overflow-hidden rounded-lg bg-neutral-100"
             >
-              <picture>
-                {item.desktop_image && (
-                  <source media="(min-width: 768px)" srcSet={item.desktop_image} />
-                )}
-                <img src={item.image} alt="" className="w-full" />
-              </picture>
+              <Banner image={item.image} desktopImage={item.desktop_image} />
             </Linked>
           ))}
         </section>
@@ -126,13 +127,7 @@ function Section({
                   href={linkHref(locale, item)}
                   className="block overflow-hidden rounded-lg bg-neutral-100"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.desktop_image ?? item.image}
-                    alt=""
-                    loading="lazy"
-                    className="w-full"
-                  />
+                  <Banner image={item.desktop_image ?? item.image} />
                 </Linked>
               </li>
             ))}
@@ -205,12 +200,11 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                   className="flex h-full flex-col items-center gap-3 rounded-lg border border-neutral-200 p-4 text-center font-medium hover:border-brand hover:text-brand"
                 >
                   {category.custom_image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={category.custom_image}
+                    <ProductImage
+                      src={productImageUrl(category.custom_image)}
                       alt=""
-                      loading="lazy"
-                      className="aspect-square w-full rounded object-cover"
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                      className="aspect-square w-full rounded"
                     />
                   )}
                   {category.name}

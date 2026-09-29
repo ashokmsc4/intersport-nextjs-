@@ -13,6 +13,7 @@ import type { ProductDetail } from "@/lib/magento/types";
 import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
+import { ProductImage } from "@/components/ProductImage";
 
 const loadProduct = cache(async (lang: string, sku: string) => {
   if (!hasLocale(lang) || !sku) notFound();
@@ -100,14 +101,13 @@ export default async function ProductPage({
       <div className="grid gap-8 md:grid-cols-2">
         <div className="grid grid-cols-4 gap-2">
           {gallery.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <ProductImage
               key={src}
               src={src}
               alt={i === 0 ? product.name : ""}
-              className={`w-full rounded-lg bg-neutral-100 object-contain ${
-                i === 0 ? "col-span-4 aspect-square" : "aspect-square"
-              }`}
+              priority={i === 0}
+              sizes={i === 0 ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 12vw, 25vw"}
+              className={`rounded-lg ${i === 0 ? "col-span-4 aspect-square" : "aspect-square"}`}
             />
           ))}
         </div>

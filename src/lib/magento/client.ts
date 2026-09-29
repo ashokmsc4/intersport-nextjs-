@@ -58,10 +58,19 @@ type RestOptions = {
   noStore?: boolean;
 };
 
+// Production's firewall rejects unknown User-Agents (including Node's default).
+const USER_AGENT = process.env.MAGENTO_USER_AGENT;
+
 async function request<T>(url: string, init: RequestInit): Promise<T> {
   if (!BASE_URL) throw new MagentoError("MAGENTO_BASE_URL is not set");
 
-  const res = await fetch(url, init);
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      ...(init.headers as Record<string, string>),
+      ...(USER_AGENT ? { "User-Agent": USER_AGENT } : {}),
+    },
+  });
   if (!res.ok) {
     let message = `Magento responded ${res.status}`;
     try {
@@ -141,16 +150,25 @@ export function magentoAppSettings<T>(
   });
 }
 
+// Backend-only hosts that some endpoints put in image URLs (staging admin, production admin node).
+const BACKEND_MEDIA_HOSTS = (process.env.MAGENTO_BACKEND_MEDIA_HOSTS ?? "prod.aaw.com")
+  .split(",")
+  .map((h) => h.trim())
+  .filter(Boolean);
+
 /**
  * Absolute URL for a product image path such as `/p/h/file.jpg`.
- * Some endpoints return image URLs on the Magento admin host; the same /media
- * files are served by the storefront host, so those are rewritten to it.
+ * Some endpoints return image URLs on a backend host (admin.* or the admin
+ * node); the same /media files are served by the storefront host, so those
+ * are rewritten to it.
  */
 export function productImageUrl(file: string | null | undefined) {
   if (!file) return null;
   if (/^https?:\/\//.test(file)) {
     const url = new URL(file);
-    if (BASE_URL && url.hostname.startsWith("admin.")) {
+    const backend =
+      url.hostname.startsWith("admin.") || BACKEND_MEDIA_HOSTS.includes(url.hostname);
+    if (BASE_URL && backend) {
       return `${BASE_URL}${url.pathname}`;
     }
     return file;

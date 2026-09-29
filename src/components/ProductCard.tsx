@@ -4,6 +4,7 @@ import { productImageUrl } from "@/lib/magento/client";
 import { attr, effectivePrice } from "@/lib/magento/catalog";
 import type { Product, ProductDetail } from "@/lib/magento/types";
 import { Price } from "./Price";
+import { ProductImage } from "./ProductImage";
 
 export type ProductCardData = {
   sku: string;
@@ -54,20 +55,16 @@ export function ProductCard({
   return (
     <Link
       href={`/${locale}/product/${encodeURIComponent(product.sku)}`}
+      // Each product page costs a slow productdetail call; don't prefetch whole grids.
+      prefetch={false}
       className="group flex flex-col gap-2"
     >
-      <div className="aspect-square overflow-hidden rounded-lg bg-neutral-100">
-        {product.image && (
-          // Plain <img> until the Magento media host is confirmed for next/image.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.image}
-            alt={product.name}
-            loading="lazy"
-            className="h-full w-full object-contain transition-transform group-hover:scale-105"
-          />
-        )}
-      </div>
+      <ProductImage
+        src={product.image}
+        alt={product.name}
+        sizes="(min-width: 1280px) 20vw, (min-width: 640px) 30vw, 50vw"
+        className="aspect-square rounded-lg transition-transform group-hover:[&_img]:scale-105"
+      />
       {product.brand && (
         <p className="text-xs uppercase tracking-wide text-neutral-500">
           {product.brand}

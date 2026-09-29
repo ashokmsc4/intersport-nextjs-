@@ -11,6 +11,7 @@ import { CartLineControls } from "@/components/cart/CartLineControls";
 import { CartTotals } from "@/components/cart/CartTotals";
 import { CouponForm } from "@/components/cart/CouponForm";
 import { buttonClass } from "@/components/forms/Field";
+import { ProductImage } from "@/components/ProductImage";
 
 export async function generateMetadata({
   params,
@@ -63,12 +64,7 @@ export default async function CartPage({ params }: PageProps<"/[lang]/cart">) {
             const final = Number(item.final_price);
             return (
               <li key={item.item_id} className="flex gap-4 py-4">
-                <div className="size-24 shrink-0 overflow-hidden rounded bg-neutral-100">
-                  {image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={image} alt="" className="size-full object-contain" />
-                  )}
-                </div>
+                <ProductImage src={image} alt="" sizes="96px" className="size-24 shrink-0 rounded" />
                 <div className="flex flex-1 flex-col gap-1">
                   {item.brand && (
                     <p className="text-xs uppercase tracking-wide text-neutral-500">
