@@ -60,9 +60,13 @@ type RestOptions = {
   noStore?: boolean;
 };
 
+// MAGENTO_TIMING=1 logs every Magento call with its duration (cache hits show ~0ms).
+const TIMING = process.env.MAGENTO_TIMING === "1";
+
 async function request<T>(url: string, init: RequestInit): Promise<T> {
   if (!BASE_URL) throw new MagentoError("MAGENTO_BASE_URL is not set");
 
+  const started = TIMING ? performance.now() : 0;
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -70,6 +74,10 @@ async function request<T>(url: string, init: RequestInit): Promise<T> {
       ...backendHeaders(),
     },
   });
+  if (TIMING) {
+    const ms = Math.round(performance.now() - started);
+    console.log(`[magento] ${ms}ms ${res.status} ${init.method ?? "GET"} ${url.replace(BASE_URL, "").slice(0, 110)}`);
+  }
   const isJson = (res.headers.get("content-type") ?? "").includes("json");
   if (!res.ok || !isJson) {
     let message = `Magento responded ${res.status}`;

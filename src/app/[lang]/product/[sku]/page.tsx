@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import { notFound } from "next/navigation";
 import { hasLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -104,8 +104,7 @@ export default async function ProductPage({
   const dict = await getDictionary(locale);
 
   const sized = (product.childrens ?? []).length > 0;
-  const [recommendations, sizeRegions, sizeGuide] = await Promise.all([
-    getRecommendations(locale, product.sku).catch(() => [] as ProductDetail[]),
+  const [sizeRegions, sizeGuide] = await Promise.all([
     // Website widgets: optional, so a failure just hides them.
     sized ? getSizeRegions(String(product.id)).catch(() => null) : null,
     sized ? getSizeGuideHtml(String(product.id)).catch(() => null) : null,
@@ -210,20 +209,27 @@ export default async function ProductPage({
         </div>
       </div>
 
-      {recommendations.length > 0 && (
-        <section className="mt-12">
-          <h2 className="mb-4 text-xl font-bold">
-            {dict.product.youMightAlsoLike}
-          </h2>
-          <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-            {recommendations.slice(0, 8).map((item) => (
-              <li key={item.sku}>
-                <ProductCard product={cardFromDetail(item)} locale={locale} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* Recommendations can take seconds on a cold cache; the page shows without them. */}
+      <Suspense fallback={null}>
+        <Recommendations locale={locale} sku={product.sku} title={dict.product.youMightAlsoLike} />
+      </Suspense>
     </article>
+  );
+}
+
+async function Recommendations({ locale, sku, title }: { locale: Locale; sku: string; title: string }) {
+  const items = await getRecommendations(locale, sku).catch(() => [] as ProductDetail[]);
+  if (items.length === 0) return null;
+  return (
+    <section className="mt-12">
+      <h2 className="mb-4 text-xl font-bold">{title}</h2>
+      <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+        {items.slice(0, 8).map((item) => (
+          <li key={item.sku}>
+            <ProductCard product={cardFromDetail(item)} locale={locale} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

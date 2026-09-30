@@ -303,6 +303,7 @@
     "loading": "Loading…",
     "decrease": "Decrease quantity of {name}",
     "increase": "Increase quantity of {name}",
-    "removeItem": "Remove {name}"
+    "removeItem": "Remove {name}",
+    "adding": "Adding to your cart…"
   }
 }

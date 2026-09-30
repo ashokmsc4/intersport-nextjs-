@@ -28,7 +28,7 @@ export default async function CartPage({ params }: PageProps<"/[lang]/cart">) {
 
   const ref = await currentCartRef();
   const cart: Cart | null = ref
-    ? await getCart(lang, ref).catch((error) => {
+    ? await getCart(lang, ref, { withCoupon: true }).catch((error) => {
         console.error("[cart] load failed:", error);
         return null;
       })

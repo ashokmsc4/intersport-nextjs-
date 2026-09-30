@@ -59,11 +59,12 @@ export function AddToCart({
   inStock: boolean;
   dict: Pick<Dictionary, "product" | "errors" | "delivery">;
 }) {
-  const { openCart } = useCartDrawer();
+  const { openCart, startAdding, addFailed } = useCartDrawer();
   const [state, action, pending] = useActionState(
     async (prev: CartActionState, form: FormData) => {
       const result = await addToCartAction(prev, form);
       if (result?.ok) openCart({ added: true });
+      else addFailed();
       return result;
     },
     undefined,
@@ -121,7 +122,15 @@ export function AddToCart({
   const needsStore = mode === "pickup" && !store;
 
   return (
-    <form action={action} className="flex flex-col gap-8">
+    <form
+      action={action}
+      // Show the drawer straight away (outside the action, so React doesn't hold the
+      // update until Magento answers, which can take seconds).
+      onSubmit={() =>
+        startAdding({ name, image, imageOptimized, size: selected ? sizeLabel(selected) : undefined, qty })
+      }
+      className="flex flex-col gap-8"
+    >
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="sku" value={hasSizes ? (selected?.sku ?? "") : sku} />
       <input type="hidden" name="sourceCode" value={mode === "pickup" ? storeId : "home_delivery"} />

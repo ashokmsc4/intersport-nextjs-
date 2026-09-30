@@ -303,6 +303,7 @@
     "loading": "جارٍ التحميل…",
     "decrease": "تقليل كمية {name}",
     "increase": "زيادة كمية {name}",
-    "removeItem": "إزالة {name}"
+    "removeItem": "إزالة {name}",
+    "adding": "جارٍ الإضافة إلى سلتك…"
   }
 }

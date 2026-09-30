@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { hasLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import {
@@ -21,8 +22,26 @@ import { SortSelect } from "@/components/catalog/SortSelect";
 import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
+import { warmProductPages } from "@/lib/magento/warm";
 
 const PAGE_SIZE = 24;
+
+// Query keys that are never product filters.
+const NOT_FILTERS = new Set(["sort", "page", "q", "price_min", "price_max", "gclid", "fbclid", "msclkid"]);
+
+/** Filters as they appear in the URL: attribute codes with numeric option ids. */
+function filtersFromQuery(query: Record<string, string | string[] | undefined>) {
+  const filters: Record<string, string[]> = {};
+  for (const [key, raw] of Object.entries(query)) {
+    if (NOT_FILTERS.has(key) || key.startsWith("utm_") || !/^[a-z][a-z0-9_]*$/.test(key)) continue;
+    const values = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter((v) => /^\d+$/.test(v));
+    if (values.length) filters[key] = values;
+  }
+  return filters;
+}
+
+const sameFilters = (a: Record<string, string[]>, b: Record<string, string[]>) =>
+  JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
 
 /** The category, or the reason Magento couldn't be read (the page then shows a notice). */
 async function load(lang: string, id: string) {
@@ -52,28 +71,33 @@ export default async function CategoryPage({
     return <BackendError dict={await getDictionary(locale)} reason={error} />;
   }
   const query = await searchParams;
-  const [dict, groups, bounds, trail] = await Promise.all([
+  const page = Math.max(1, Number(query.page) || 1);
+  const sort = parseSort(query.sort);
+  const price = selectedPrice(query);
+  const productsFor = (filters: Record<string, string[]>) =>
+    settle(
+      getCategoryProducts(locale, { categoryId: category.id, filters, price, sort, page, pageSize: PAGE_SIZE }),
+      `category ${category.id} products`,
+    );
+
+  // Products don't wait for the filter list: they start with the filters in the URL,
+  // and are only fetched again if one of those turns out not to be a real filter.
+  const guessed = filtersFromQuery(query);
+  const [dict, groups, bounds, trail, firstTry] = await Promise.all([
     getDictionary(locale),
     getFilters(locale, category.id).catch(() => []),
     getPriceBounds(locale, category.id).catch(() => null),
     getCategoryPath(locale, category.id).catch(() => []),
+    productsFor(guessed),
   ]);
-
-  const page = Math.max(1, Number(query.page) || 1);
-  const sort = parseSort(query.sort);
   const filters = selectedFilters(query, groups);
-  const price = selectedPrice(query);
-  const { value: result, error: failure } = await settle(
-    getCategoryProducts(locale, {
-      categoryId: category.id,
-      filters,
-      price,
-      sort,
-      page,
-      pageSize: PAGE_SIZE,
-    }),
-    `category ${category.id} products`,
-  );
+  const { value: result, error: failure } =
+    sameFilters(filters, guessed) ? firstTry : await productsFor(filters);
+
+  // Opening a product from here is the likely next step: fetch the first ones' details
+  // into the cache after this response has been sent.
+  if (result) after(() => warmProductPages(locale, result.items));
+
   // Show children; a last-level category shows its siblings so shoppers can move across.
   const children = visibleChildren(category);
   const parent = trail.length > 1 ? trail[trail.length - 2] : null;

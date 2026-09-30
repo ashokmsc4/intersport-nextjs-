@@ -30,7 +30,7 @@ export function CartLineControls({
     (action: typeof updateQtyAction): typeof updateQtyAction =>
     async (prev, form) => {
       const result = await action(prev, form);
-      if (result?.ok) setCount(result.count);
+      if (result?.ok && result.count !== undefined) setCount(result.count);
       return result;
     };
   const [updateState, update, updating] = useActionState(withCount(updateQtyAction), undefined);
@@ -49,6 +49,7 @@ export function CartLineControls({
           <input type="hidden" name="itemId" value={itemId} />
           <input type="hidden" name="sku" value={sku} />
           <input type="hidden" name="sourceCode" value={sourceCode} />
+          <input type="hidden" name="countDelta" defaultValue="0" />
           <label className="sr-only" htmlFor={`qty-${itemId}`}>
             {dict.product.quantity}
           </label>
@@ -59,7 +60,14 @@ export function CartLineControls({
             name="qty"
             defaultValue={String(qty)}
             disabled={updating || removing}
-            onChange={(e) => e.currentTarget.form?.requestSubmit()}
+            onChange={(e) => {
+              const form = e.currentTarget.form;
+              if (!form) return;
+              (form.elements.namedItem("countDelta") as HTMLInputElement).value = String(
+                Number(e.currentTarget.value) - qty,
+              );
+              form.requestSubmit();
+            }}
             className="rounded border border-neutral-300 px-2 py-1"
           >
             {Array.from({ length: options }, (_, i) => (
@@ -72,6 +80,7 @@ export function CartLineControls({
         <form action={remove}>
           <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="itemId" value={itemId} />
+          <input type="hidden" name="countDelta" value={-qty} />
           <button
             type="submit"
             disabled={updating || removing}

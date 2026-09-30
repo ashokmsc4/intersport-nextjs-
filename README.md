@@ -112,6 +112,17 @@ Browsers load Magento images directly from the CDNs; neither Vercel nor the Next
   load through the `loadListingPage` server action as the shopper nears the end (`InfiniteProducts`). The
   list and scroll position are kept in sessionStorage for the back button; a `?page=` "Load more" link
   remains for crawlers.
+- Magento calls are made in parallel wherever they don't depend on each other, and only the ones a page shows:
+  - Guest carts: one round trip (`cartlist` takes the masked id and returns the quote id); the coupon is only
+    loaded on the cart page.
+  - Add to cart: a single "add item" call (a new guest cart only when Magento says the old one is gone); the
+    drawer opens at once with the product and fills in when Magento confirms. Quantity changes update the
+    header count without re-reading the cart.
+  - Checkout: the form renders straight away; the order summary streams in with the cart.
+  - Product pages: recommendations (up to ~12 s cold on production) stream in below the product.
+  - Category pages: filters and products load in parallel; after a listing is sent, the first products'
+    details and size widgets are fetched into the cache (`after()`, two at a time) so opening one is fast.
+- `MAGENTO_TIMING=1` logs every Magento call with its duration.
 - Product cards prefetch on hover/touch (`HoverPrefetchLink`), not on scroll, so a grid doesn't render 24 pages.
 - `src/app/[lang]/loading.tsx` shows an instant skeleton while a page that isn't cached yet renders.
 - On Vercel, set the Functions region next to the Magento server: production is hosted in Ireland, so use

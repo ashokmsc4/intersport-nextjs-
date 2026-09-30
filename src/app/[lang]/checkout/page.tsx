@@ -31,20 +31,26 @@ export default async function CheckoutPage({
   if (!hasLocale(lang)) notFound();
 
   const ref = await currentCartRef();
-  const cart = ref ? await getCart(lang, ref).catch(() => null) : null;
-  if (!ref || !cart || cart.items.length === 0) redirect(`/${lang}/cart`);
+  if (!ref) redirect(`/${lang}/cart`);
 
-  const [dict, governorates, customer] = await Promise.all([
+  // Everything at once: the cart (with its coupon, shown in the summary), delivery
+  // areas, and the customer with their saved addresses.
+  const customerData =
+    ref.kind === "customer"
+      ? getCustomer(lang, ref.token)
+          .then(async (customer) => ({
+            customer,
+            addresses: await getAddresses(lang, ref.token, customer.id).catch(() => [] as SavedAddress[]),
+          }))
+          .catch(() => ({ customer: null, addresses: [] as SavedAddress[] }))
+      : Promise.resolve({ customer: null, addresses: [] as SavedAddress[] });
+  const [cart, dict, governorates, { customer, addresses }] = await Promise.all([
+    getCart(lang, ref, { withCoupon: true }).catch(() => null),
     getDictionary(lang),
     getAreas(lang),
-    ref.kind === "customer"
-      ? getCustomer(lang, ref.token).catch(() => null)
-      : Promise.resolve(null),
+    customerData,
   ]);
-  const addresses: SavedAddress[] =
-    ref.kind === "customer" && customer
-      ? await getAddresses(lang, ref.token, customer.id).catch(() => [])
-      : [];
+  if (!cart || cart.items.length === 0) redirect(`/${lang}/cart`);
   // Default address first, mapped onto the checkout fields.
   const saved: SavedChoice[] = [...addresses]
     .sort((a, b) => b.is_default_shipping - a.is_default_shipping)

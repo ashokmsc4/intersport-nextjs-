@@ -120,34 +120,54 @@ const emptyCart = (quoteId = ""): Cart => ({
   count: 0,
 });
 
-/** Items and totals via the custom `cartlist` endpoint (includes images and sizes). */
-export async function getCart(locale: Locale, ref: CartRef): Promise<Cart> {
-  const quoteId = await getQuoteId(locale, ref);
-  if (!quoteId) return emptyCart();
+/**
+ * Items and totals via the custom `cartlist` endpoint (includes images and sizes).
+ * Guests need a single round trip: cartlist takes the masked id and returns the numeric
+ * quote id. The coupon is only loaded when asked for (the cart page shows it).
+ */
+export async function getCart(
+  locale: Locale,
+  ref: CartRef,
+  { withCoupon = false }: { withCoupon?: boolean } = {},
+): Promise<Cart> {
+  // Returns the code as a string, or [] when no coupon is applied.
+  const coupon = withCoupon
+    ? magentoRest<string | string[] | null>(`${basePath(ref)}/coupons`, {
+        locale,
+        auth: auth(ref),
+        noStore: true,
+      })
+        .then((c) => (Array.isArray(c) ? (c[0] ?? "") : (c ?? "")))
+        .catch(() => "")
+    : Promise.resolve("");
 
+  let quoteId = "";
+  if (ref.kind === "customer") {
+    quoteId = (await getQuoteId(locale, ref)) ?? "";
+    if (!quoteId) return emptyCart();
+  }
   const listId = ref.kind === "guest" ? ref.maskedId : quoteId;
-  const [list, coupon] = await Promise.all([
-    magentoRest<CartListResponse>(
-      `V1/cartlist/${encodeURIComponent(listId)}`,
-      { locale, auth: auth(ref), noStore: true },
-    ),
-    // Returns the code as a string, or [] when no coupon is applied.
-    magentoRest<string | string[] | null>(`${basePath(ref)}/coupons`, {
+  const [list, code] = await Promise.all([
+    magentoRest<CartListResponse>(`V1/cartlist/${encodeURIComponent(listId)}`, {
       locale,
       auth: auth(ref),
       noStore: true,
-    })
-      .then((c) => (Array.isArray(c) ? (c[0] ?? "") : (c ?? "")))
-      .catch(() => ""),
+    }).catch((error) => {
+      // A guest cart that expired or became an order: treat as empty.
+      if (error instanceof MagentoError && error.status && error.status < 500) return null;
+      throw error;
+    }),
+    coupon,
   ]);
 
-  const data = list[0];
-  const items = data?.items ?? [];
+  const data = list?.[0];
+  if (!data || (data.status && data.status !== 200)) return emptyCart(quoteId);
+  const items = data.items ?? [];
   return {
-    quoteId,
+    quoteId: quoteId || String(data.quote_id ?? ""),
     items,
-    totals: data?.totals ?? null,
-    coupon: String(coupon),
+    totals: data.totals ?? null,
+    coupon: String(code),
     count: items.reduce((sum, item) => sum + Number(item.qty), 0),
   };
 }

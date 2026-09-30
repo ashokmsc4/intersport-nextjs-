@@ -44,12 +44,11 @@ function cleanAddress(raw: AddressInput): AddressInput | string {
 async function checkoutContext(locale: Locale) {
   const ref = await currentCartRef();
   if (!ref) return null;
-  const quoteId = await getQuoteId(locale, ref);
+  const [quoteId, customerId] = await Promise.all([
+    getQuoteId(locale, ref),
+    ref.kind === "customer" ? getCustomer(locale, ref.token).then((c) => c.id) : undefined,
+  ]);
   if (!quoteId) return null;
-  const customerId =
-    ref.kind === "customer"
-      ? (await getCustomer(locale, ref.token)).id
-      : undefined;
   return { ref, quoteId, customerId };
 }
 

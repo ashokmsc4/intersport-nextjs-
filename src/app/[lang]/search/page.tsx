@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { hasLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { parseSort, searchProducts } from "@/lib/magento/catalog";
@@ -8,6 +9,7 @@ import { FilterPanel } from "@/components/catalog/FilterPanel";
 import { SortSelect } from "@/components/catalog/SortSelect";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
+import { warmProductPages } from "@/lib/magento/warm";
 import { SearchBox } from "@/components/search/SearchBox";
 import { imageHosts } from "@/lib/media";
 
@@ -45,6 +47,7 @@ export default async function SearchPage({
   const { value: result, error: failure } = q
     ? await settle(searchProducts(lang, q, { sort, page, pageSize: PAGE_SIZE }), "search")
     : { value: null, error: null };
+  if (result) after(() => warmProductPages(lang, result.items));
 
   return (
     <section>

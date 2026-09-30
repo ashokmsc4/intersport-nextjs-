@@ -23,13 +23,15 @@ import { getPickupAvailability, type PickupStore } from "@/lib/magento/pickup";
 import {
   clearGuestCart,
   clearSession,
+  getCartCount,
   setCartCount,
   setGuestCartId,
 } from "@/lib/session";
 import { currentCartRef } from "@/lib/shopper";
 
 export type CartActionState =
-  | { ok: true; count: number }
+  /** `count` is the new item count when the action knows it (the drawer reloads otherwise). */
+  | { ok: true; count?: number }
   | { ok: false; error: string }
   | undefined;
 
@@ -75,30 +77,14 @@ function parseOptions(raw: string) {
   }
 }
 
-async function syncCount(locale: Locale, ref: CartRef) {
-  const cart = await getCart(locale, ref).catch(() => null);
-  const count = cart?.count ?? 0;
-  await setCartCount(count);
-  return count;
-}
-
-/** Cart to add to, creating a guest cart when the shopper has none yet. */
-async function cartForAdding(locale: Locale) {
-  const ref = await currentCartRef();
-  if (ref?.kind === "customer") {
-    return { ref, quoteId: await ensureCustomerQuoteId(locale, ref.token) };
-  }
-  if (ref) {
-    const quoteId = await getQuoteId(locale, ref);
-    if (quoteId) return { ref, quoteId };
-    // The guest cart expired or was ordered; start a new one.
-    await clearGuestCart();
-  }
+/** Guest cart to add to: the saved one, or a new one when there is none. */
+async function newGuestCart(locale: Locale): Promise<CartRef> {
   const maskedId = await createGuestCart(locale);
   await setGuestCartId(maskedId);
-  const guest: CartRef = { kind: "guest", maskedId };
-  return { ref: guest, quoteId: (await getQuoteId(locale, guest)) ?? "" };
+  return { kind: "guest", maskedId };
 }
+
+const status = (error: unknown) => (error instanceof MagentoError ? error.status : undefined);
 
 export async function addToCartAction(
   _prev: CartActionState,
@@ -116,12 +102,26 @@ export async function addToCartAction(
     input.configurable = { parentSku, options };
   }
 
+  // One Magento call in the usual case: guests add with the masked cart id, customers
+  // to their active cart. A missing cart (expired, ordered) is created and the add retried.
+  // The drawer then loads the cart (and the header count) once.
   try {
-    const { ref, quoteId } = await cartForAdding(locale);
-    await addItem(locale, ref, quoteId, input);
-    const count = await syncCount(locale, ref);
-    refresh();
-    return { ok: true, count };
+    const ref = (await currentCartRef()) ?? (await newGuestCart(locale));
+    try {
+      await addItem(locale, ref, "", input);
+    } catch (error) {
+      // Customers: retry with the active quote id (created if needed). Guests: only a
+      // 404 means the cart is gone; other errors (stock, options) must not replace it.
+      if (ref.kind === "customer") {
+        if (status(error) !== 400 && status(error) !== 404) throw error;
+        await addItem(locale, ref, await ensureCustomerQuoteId(locale, ref.token), input);
+      } else {
+        if (status(error) !== 404) throw error;
+        await clearGuestCart();
+        await addItem(locale, await newGuestCart(locale), "", input);
+      }
+    }
+    return { ok: true };
   } catch (error) {
     return failure(error);
   }
@@ -136,8 +136,12 @@ async function withCart(
   if (!ref) return { ok: false, error: "emptyCart" };
   try {
     await change(locale, ref);
-    const count = await syncCount(locale, ref);
-    refresh();
+    // New count without re-reading the cart: the form says how the line changed.
+    const delta = Number(text(form, "countDelta")) || 0;
+    const count = Math.max(0, (await getCartCount()) + delta);
+    await setCartCount(count);
+    // Re-render the page behind the form (the cart page); the drawer skips this elsewhere.
+    if (text(form, "refresh") !== "0") refresh();
     return { ok: true, count };
   } catch (error) {
     return failure(error);
@@ -149,7 +153,8 @@ export async function updateQtyAction(
   form: FormData,
 ): Promise<CartActionState> {
   return withCart(form, async (locale, ref) => {
-    const quoteId = (await getQuoteId(locale, ref)) ?? "";
+    // Guests address the cart by its masked id; only customers need the quote id.
+    const quoteId = ref.kind === "customer" ? ((await getQuoteId(locale, ref)) ?? "") : "";
     const qty = Math.max(1, Math.min(10, Number(text(form, "qty")) || 1));
     await updateItemQty(locale, ref, quoteId, {
       itemId: text(form, "itemId"),
@@ -220,6 +225,8 @@ export async function miniCartAction(locale: string): Promise<MiniCart> {
   if (!ref) return empty;
   const cart = await getCart(safeLocale, ref).catch(() => null);
   if (!cart) return empty;
+  // Keeps the header count (read from this cookie by /api/session) in step.
+  await setCartCount(cart.count);
 
   const label = (item: (typeof cart.items)[number], code: string) =>
     item.cart_custom_attributes?.find((a) => a.attribute_code === code)?.label || null;
