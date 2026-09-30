@@ -1,4 +1,5 @@
 import type { Order } from "@/lib/magento/customer";
+import { formatPrice } from "@/lib/format";
 
 /** Magento lists configurable children too; show only top-level lines. */
 export const visibleItems = (order: Order) =>
@@ -17,3 +18,13 @@ export const formatDate = (value: string, locale: string) =>
     locale === "ar" ? "ar-KW-u-nu-latn" : "en-KW",
     { year: "numeric", month: "short", day: "numeric" },
   );
+
+/** One line of the order history, ready to display. */
+export type OrderRow = { id: string; date: string; status: string; total: string };
+
+export const toOrderRow = (order: Order, locale: string): OrderRow => ({
+  id: order.increment_id,
+  date: formatDate(order.created_at, locale),
+  status: statusLabel(order.status),
+  total: formatPrice(order.grand_total, locale as "en" | "ar"),
+});

@@ -8,8 +8,10 @@ import {
   deleteAddress,
   getAddresses,
   getCustomer,
+  getOrders,
   requestPasswordReset,
 } from "@/lib/magento/customer";
+import { toOrderRow, type OrderRow } from "@/lib/orders";
 import { getCustomerToken } from "@/lib/session";
 
 export type AccountState =
@@ -114,4 +116,29 @@ export async function passwordResetAction(
     throw error;
   }
   return { ok: true, message: email };
+}
+
+/** Next page of the signed-in customer's orders, for infinite scroll. */
+export async function loadOrdersPage(
+  rawLocale: string,
+  rawPage: number,
+  pageSize: number,
+): Promise<{ ok: true; rows: OrderRow[]; total: number } | { ok: false; error: string }> {
+  const locale = hasLocale(rawLocale) ? rawLocale : "en";
+  const page = Math.trunc(Number(rawPage));
+  const size = Math.min(50, Math.max(1, Math.trunc(Number(pageSize)) || 10));
+  if (!(page >= 1 && page <= 1000)) return { ok: false, error: "bad page" };
+  const token = await getCustomerToken();
+  if (!token) return { ok: false, error: "sessionExpired" };
+  try {
+    const result = await getOrders(locale, token, { page, pageSize: size });
+    return {
+      ok: true,
+      rows: result.items.map((o) => toOrderRow(o, locale)),
+      total: result.total_count,
+    };
+  } catch (error) {
+    if (error instanceof MagentoError) return { ok: false, error: error.message };
+    throw error;
+  }
 }
