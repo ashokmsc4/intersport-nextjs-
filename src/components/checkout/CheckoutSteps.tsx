@@ -4,28 +4,84 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { PaymentMethod, ShippingMethod } from "@/lib/magento/checkout";
 import { formatPrice } from "@/lib/format";
-import { BoxIcon, RocketIcon, StoreIcon, TruckIcon } from "@/components/icons";
+import { CardIcon, CartIcon, CheckIcon, PinIcon } from "@/components/icons";
 
-/** Section title with its step number in a circle, as on the website's checkout. */
-export function StepHeading({ step, children }: { step: number; children: React.ReactNode }) {
+export type CheckoutStep = "address" | "payment";
+
+/** Cart → Address → Payment progress; Cart is always done and links back to the cart. */
+export function CheckoutStepper({
+  locale,
+  step,
+  dict,
+}: {
+  locale: string;
+  step: CheckoutStep;
+  dict: Pick<Dictionary, "checkout">;
+}) {
+  const t = dict.checkout;
+  const steps = [
+    { key: "cart", label: t.stepCart, Icon: CartIcon },
+    { key: "address", label: t.stepAddress, Icon: PinIcon },
+    { key: "payment", label: t.stepPayment, Icon: CardIcon },
+  ] as const;
+  const current = steps.findIndex((s) => s.key === step);
   return (
-    <h2 className="mb-5 flex items-center gap-4 text-xl font-bold tracking-wide sm:text-2xl">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-lg text-white">
-        {step}
-      </span>
-      {children}
-    </h2>
+    <nav aria-label={t.progress} className="mb-8">
+      <ol className="flex items-start justify-center">
+        {steps.map(({ key, label, Icon }, i) => {
+          const done = i < current;
+          const active = i === current;
+          const circle = (
+            <span
+              className={`flex size-10 items-center justify-center rounded-full [&_svg]:size-[18px] ${
+                done || active ? "bg-brand text-white" : "bg-white text-neutral-400"
+              }`}
+            >
+              {done ? <CheckIcon /> : <Icon />}
+            </span>
+          );
+          return (
+            <li key={key} className="flex items-start">
+              {i > 0 && (
+                <span
+                  aria-hidden
+                  className={`mx-2 mt-5 h-0.5 w-12 sm:mx-3 sm:w-20 ${i <= current ? "bg-brand" : "bg-neutral-300"}`}
+                />
+              )}
+              <div
+                aria-current={active ? "step" : undefined}
+                className={`flex w-16 flex-col items-center gap-1.5 text-sm ${
+                  done || active ? "font-medium text-neutral-900" : "text-neutral-500"
+                }`}
+              >
+                {key === "cart" ? (
+                  <a href={`/${locale}/cart`} className="rounded-full hover:opacity-80">
+                    {circle}
+                  </a>
+                ) : (
+                  circle
+                )}
+                {label}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }
 
-const radioClass = "size-5 shrink-0 accent-sky-500";
-const pillClass = "shrink-0 bg-neutral-100 px-4 py-2 text-brand tracking-wide";
+/** Selectable card row shared by the shipping, payment and saved-address choices. */
+export const optionClass =
+  "flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3.5 text-sm transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/5 has-[:checked]:ring-1 has-[:checked]:ring-brand border-neutral-200 hover:border-neutral-400";
 
-function shippingLook(code: string) {
-  if (code.startsWith("same_day")) return { Icon: RocketIcon, kind: "express" as const };
-  if (code.startsWith("amstorepickup")) return { Icon: StoreIcon, kind: "pickup" as const };
-  if (code.startsWith("flatrate")) return { Icon: BoxIcon, kind: "nextDay" as const };
-  return { Icon: TruckIcon, kind: "other" as const };
+const radioClass = "size-4 shrink-0 accent-brand";
+
+function shippingKind(code: string) {
+  if (code.startsWith("same_day")) return "express" as const;
+  if (code.startsWith("amstorepickup")) return "pickup" as const;
+  if (code.startsWith("flatrate")) return "nextDay" as const;
+  return "other" as const;
 }
 
 export function ShippingOptions({
@@ -42,17 +98,17 @@ export function ShippingOptions({
   onChange: (code: string) => void;
   /** Tomorrow's date, formatted when the options were loaded. */
   tomorrow: string;
-  dict: Pick<Dictionary, "checkout" | "cart">;
+  dict: Pick<Dictionary, "checkout">;
 }) {
   const t = dict.checkout;
   return (
-    <div role="radiogroup" aria-label={t.shippingMethod} className="divide-y divide-neutral-300 rounded-md border border-neutral-300 px-4 sm:ms-12 sm:px-6">
+    <div role="radiogroup" aria-label={t.shippingMethod} className="flex flex-col gap-3">
       {methods.map((method) => {
-        const { Icon, kind } = shippingLook(method.code);
+        const kind = shippingKind(method.code);
         const cost = Number(method.cost);
         const [before, after] = t.getItIn.split("{time}");
         return (
-          <label key={method.code} className="flex cursor-pointer items-center gap-4 py-5 sm:gap-6">
+          <label key={method.code} className={optionClass}>
             <input
               type="radio"
               name="shipping"
@@ -61,22 +117,25 @@ export function ShippingOptions({
               onChange={() => onChange(method.code)}
               className={radioClass}
             />
-            <Icon />
-            <span className="flex flex-1 flex-col gap-1">
-              <span className="text-lg tracking-wide">{method.title}</span>
-              <span className="text-sm tracking-wide text-neutral-600">
-                {kind === "nextDay" && t.getItBy.replace("{date}", tomorrow)}
-                {kind === "express" && (
-                  <>
-                    {before}
-                    <span className="text-green-600">{t.twoHours}</span>
-                    {after}
-                  </>
-                )}
-                {kind === "pickup" && t.collectFromStore}
-              </span>
+            <span className="flex flex-1 flex-col">
+              <span>{method.title}</span>
+              {kind !== "other" && (
+                <span className="text-xs text-neutral-500">
+                  {kind === "nextDay" && t.getItBy.replace("{date}", tomorrow)}
+                  {kind === "express" && (
+                    <>
+                      {before}
+                      <span className="text-green-700">{t.twoHours}</span>
+                      {after}
+                    </>
+                  )}
+                  {kind === "pickup" && t.collectFromStore}
+                </span>
+              )}
             </span>
-            <span className={pillClass}>{cost > 0 ? formatPrice(cost, locale) : dict.cart.free}</span>
+            <span className="shrink-0 font-semibold">
+              {cost > 0 ? formatPrice(cost, locale) : t.freeShipping}
+            </span>
           </label>
         );
       })}
@@ -133,13 +192,13 @@ export function PaymentOptions({
 }) {
   const t = dict.checkout;
   return (
-    <div role="radiogroup" aria-label={t.payment} className="divide-y divide-neutral-300 rounded-md border border-neutral-300 px-4 sm:ms-12 sm:px-6">
+    <div role="radiogroup" aria-label={t.paymentMethod} className="flex flex-col gap-3">
       {choices.map((choice) => {
         const code = choice.gateway || choice.method;
         const logo = LOGOS[code];
         return (
-          <div key={choice.key} className="py-6">
-            <label className="flex cursor-pointer items-center gap-5">
+          <div key={choice.key}>
+            <label className={optionClass}>
               <input
                 type="radio"
                 name="payment"
@@ -154,14 +213,14 @@ export function PaymentOptions({
                   src={logo.src}
                   alt=""
                   width={logo.width}
-                  className={`h-auto ${logo.dark ? "" : "rounded border border-neutral-200 bg-white p-1"}`}
+                  className={`h-auto ${logo.dark ? "" : "rounded border border-neutral-200 bg-white p-0.5"}`}
                 />
               )}
               {code === "cashondelivery" && <CodBadge />}
-              <span className="tracking-wide text-brand">{choice.label}</span>
+              <span>{choice.label}</span>
             </label>
-            {code === "cashondelivery" && (
-              <p className="mt-4 ps-10 text-sm font-semibold tracking-wide text-brand">{t.codNote}</p>
+            {code === "cashondelivery" && value === choice.key && (
+              <p className="mt-2 px-4 text-xs text-neutral-600">{t.codNote}</p>
             )}
           </div>
         );

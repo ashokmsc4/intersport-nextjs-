@@ -138,3 +138,23 @@ export const CloseIcon = () => (
     <path d="M6 6l12 12M18 6 6 18" />
   </svg>
 );
+
+export const CheckIcon = () => (
+  <svg {...base} width={18} height={18}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+);
+
+export const CardIcon = () => (
+  <svg {...base} width={18} height={18}>
+    <rect x="3" y="5.5" width="18" height="13" rx="2" />
+    <path d="M3 10h18" />
+  </svg>
+);
+
+export const TagIcon = () => (
+  <svg {...base} width={18} height={18}>
+    <path d="M3 12.2V4a1 1 0 0 1 1-1h8.2a1 1 0 0 1 .7.3l7.8 7.8a1 1 0 0 1 0 1.4l-8.2 8.2a1 1 0 0 1-1.4 0l-7.8-7.8a1 1 0 0 1-.3-.7z" />
+    <circle cx="7.5" cy="7.5" r="1.3" />
+  </svg>
+);

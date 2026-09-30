@@ -13,10 +13,8 @@ import {
   type SavedAddress,
 } from "@/lib/magento/customer";
 import { addressLine } from "@/lib/addresses";
-import { formatPrice } from "@/lib/format";
 import { currentCartRef } from "@/lib/shopper";
 import { CheckoutForm, type SavedChoice } from "@/components/checkout/CheckoutForm";
-import { ProductImage } from "@/components/ProductImage";
 
 export async function generateMetadata({
   params,
@@ -77,14 +75,35 @@ export default async function CheckoutPage({
       }
     : {};
   const t = dict.checkout;
+  const totals = cart.totals;
+  const subtotal = Number(totals?.sub_total ?? 0);
+  const afterDiscount = Number(totals?.subtotal_with_discount ?? subtotal);
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">{t.title}</h1>
-      <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
-        <div>
-          {ref.kind === "guest" && (
-            <p className="mb-6 rounded bg-neutral-100 p-3 text-sm">
+    <div className="-my-8 bg-[#efefef] py-8 shadow-[0_0_0_100vmax_#efefef] [clip-path:inset(0_-100vmax)]">
+      <h1 className="sr-only">{t.title}</h1>
+      <CheckoutForm
+        locale={lang}
+        governorates={governorates}
+        prefill={prefill}
+        saved={saved}
+        preferPickup={cart.items.some((i) => pickupStoreName(i) !== null)}
+        items={cart.items.map((item) => ({
+          id: item.item_id,
+          name: item.name,
+          qty: Number(item.qty),
+          price: Number(item.final_price) * Number(item.qty),
+          image: productImageUrl(item.image),
+        }))}
+        cartTotals={{
+          subtotal,
+          discount: afterDiscount - subtotal,
+          total: Number(totals?.total ?? afterDiscount),
+        }}
+        coupon={cart.coupon}
+        notice={
+          ref.kind === "guest" && (
+            <p className="rounded-lg bg-white p-4 text-sm">
               {t.guestNote}{" "}
               <Link
                 href={`/${lang}/account/login?next=/${lang}/checkout`}
@@ -93,41 +112,16 @@ export default async function CheckoutPage({
                 {t.signInFaster}
               </Link>
             </p>
-          )}
-          <CheckoutForm
-            locale={lang}
-            governorates={governorates}
-            prefill={prefill}
-            saved={saved}
-            preferPickup={cart.items.some((i) => pickupStoreName(i) !== null)}
-            dict={{
-              addresses: dict.addresses,
-              checkout: dict.checkout,
-              account: dict.account,
-              cart: dict.cart,
-              errors: dict.errors,
-            }}
-          />
-        </div>
-        <aside className="h-fit rounded-lg border border-neutral-200 p-4">
-          <h2 className="mb-3 font-semibold">{t.summary}</h2>
-          <ul className="flex flex-col gap-3">
-            {cart.items.map((item) => {
-              const image = productImageUrl(item.image);
-              return (
-                <li key={item.item_id} className="flex gap-3 text-sm">
-                  <ProductImage src={image} alt="" sizes="56px" className="size-14 shrink-0 rounded" />
-                  <p className="flex-1">
-                    {item.name}
-                    <span className="block text-neutral-500">× {item.qty}</span>
-                  </p>
-                  <p>{formatPrice(Number(item.final_price) * Number(item.qty), lang)}</p>
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
-      </div>
+          )
+        }
+        dict={{
+          addresses: dict.addresses,
+          checkout: dict.checkout,
+          account: dict.account,
+          cart: dict.cart,
+          errors: dict.errors,
+        }}
+      />
     </div>
   );
 }

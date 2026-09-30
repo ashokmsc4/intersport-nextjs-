@@ -178,7 +178,17 @@
     "collectFromStore": "Collect from the store",
     "codNote": "Please accept Cash on Delivery orders within 3 days of delivery notice. Orders not accepted will be cancelled.",
     "shipTo": "Ship to",
-    "choosePaymentFirst": "Choose a payment option"
+    "choosePaymentFirst": "Choose a payment option",
+    "stepCart": "Cart",
+    "stepAddress": "Address",
+    "stepPayment": "Payment",
+    "chooseSaved": "Choose a saved address",
+    "useNewAddress": "Use a new address",
+    "paymentMethod": "Payment method",
+    "back": "Back",
+    "freeShipping": "Free shipping",
+    "progress": "Checkout progress",
+    "completeAddress": "Please complete this address."
   },
   "errors": {
     "required": "Please fill in all required fields.",

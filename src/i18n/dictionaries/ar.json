@@ -178,7 +178,17 @@
     "collectFromStore": "الاستلام من المتجر",
     "codNote": "يرجى استلام طلبات الدفع عند الاستلام خلال 3 أيام من إشعار التوصيل. سيتم إلغاء الطلبات غير المستلمة.",
     "shipTo": "الشحن إلى",
-    "choosePaymentFirst": "اختر طريقة الدفع"
+    "choosePaymentFirst": "اختر طريقة الدفع",
+    "stepCart": "السلة",
+    "stepAddress": "العنوان",
+    "stepPayment": "الدفع",
+    "chooseSaved": "اختر عنواناً محفوظاً",
+    "useNewAddress": "استخدم عنواناً جديداً",
+    "paymentMethod": "طريقة الدفع",
+    "back": "رجوع",
+    "freeShipping": "شحن مجاني",
+    "progress": "مراحل الدفع",
+    "completeAddress": "يرجى إكمال هذا العنوان."
   },
   "errors": {
     "required": "يرجى تعبئة جميع الحقول المطلوبة.",
