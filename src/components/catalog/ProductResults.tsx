@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ListingSource } from "@/app/actions/catalog";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -16,6 +17,7 @@ export function ProductResults({
   path,
   source,
   sort,
+  toolbar,
 }: {
   locale: Locale;
   dict: Pick<Dictionary, "category">;
@@ -27,6 +29,8 @@ export function ProductResults({
   path: string;
   source: ListingSource;
   sort: string;
+  /** Controls shown at the end of the count row, e.g. the sort dropdown. */
+  toolbar?: ReactNode;
 }) {
   const q = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -38,9 +42,12 @@ export function ProductResults({
 
   return (
     <>
-      <p className="mb-4 text-sm text-neutral-500">
-        {dict.category.results.replace("{count}", String(result.total_count))}
-      </p>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-neutral-500">
+          {dict.category.results.replace("{count}", String(result.total_count))}
+        </p>
+        {toolbar}
+      </div>
       <InfiniteProducts
         // A new filter, sort or search starts a new list.
         key={`${path}?${query}&p=${page}`}

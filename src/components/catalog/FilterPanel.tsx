@@ -1,7 +1,10 @@
 "use client";
 
 import type { Dictionary } from "@/i18n/dictionaries";
-import type { FilterGroup, SortKey } from "@/lib/magento/catalog";
+import type { FilterGroup } from "@/lib/magento/catalog";
+
+/** Id of the filter form; SortSelect joins it through the `form` attribute. */
+export const FILTER_FORM_ID = "listing-filters";
 
 /**
  * Plain GET form so filtered URLs are shareable and work without JavaScript;
@@ -10,42 +13,25 @@ import type { FilterGroup, SortKey } from "@/lib/magento/catalog";
 export function FilterPanel({
   groups,
   selected,
-  sort,
   query,
   clearHref,
   dict,
 }: {
   groups: FilterGroup[];
   selected: Record<string, string[]>;
-  sort: SortKey;
   /** Search term to keep when filtering search results. */
   query?: string;
   clearHref: string;
   dict: Pick<Dictionary, "filters">;
 }) {
   const t = dict.filters;
-  const submit = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const submit = (e: React.ChangeEvent<HTMLInputElement>) =>
     e.currentTarget.form?.requestSubmit();
   const active = Object.values(selected).flat().length;
 
   return (
-    <form method="get" className="flex flex-col gap-4">
+    <form id={FILTER_FORM_ID} method="get" className="flex flex-col gap-4">
       {query !== undefined && <input type="hidden" name="q" value={query} />}
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-semibold">{t.sortBy}</span>
-        <select
-          name="sort"
-          defaultValue={sort}
-          onChange={submit}
-          className="rounded border border-neutral-300 px-3 py-2"
-        >
-          <option value="recommended">{t.recommended}</option>
-          <option value="newest">{t.newest}</option>
-          <option value="price_asc">{t.priceLow}</option>
-          <option value="price_desc">{t.priceHigh}</option>
-        </select>
-      </label>
-
       {groups.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="font-semibold">

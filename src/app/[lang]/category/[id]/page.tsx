@@ -14,6 +14,7 @@ import {
 } from "@/lib/magento/catalog";
 import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { SortSelect } from "@/components/catalog/SortSelect";
 import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
@@ -102,7 +103,6 @@ export default async function CategoryPage({
           <FilterPanel
             groups={groups}
             selected={filters}
-            sort={sort}
             clearHref={`/${locale}/category/${category.id}`}
             dict={dict}
           />
@@ -123,6 +123,7 @@ export default async function CategoryPage({
               path={`/${locale}/category/${category.id}`}
               source={{ type: "category", categoryId: category.id, filters }}
               sort={sort}
+              toolbar={<SortSelect sort={sort} dict={dict} />}
             />
           )}
         </div>

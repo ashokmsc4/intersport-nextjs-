@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { parseSort, searchProducts } from "@/lib/magento/catalog";
 import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { SortSelect } from "@/components/catalog/SortSelect";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
 import { SearchBox } from "@/components/search/SearchBox";
@@ -61,17 +62,15 @@ export default async function SearchPage({
         className="mb-8 max-w-xl"
       />
       {q && (
-        <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
-          <aside>
-            <FilterPanel
-              groups={[]}
-              selected={{}}
-              sort={sort}
-              query={q}
-              clearHref={`/${lang}/search?q=${encodeURIComponent(q)}`}
-              dict={dict}
-            />
-          </aside>
+        <div>
+          {/* No filters on search yet: the form only carries q for the sort dropdown. */}
+          <FilterPanel
+            groups={[]}
+            selected={{}}
+            query={q}
+            clearHref={`/${lang}/search?q=${encodeURIComponent(q)}`}
+            dict={dict}
+          />
           <div>
             {result === null ? (
               <BackendError dict={dict} reason={failure ?? ""} />
@@ -88,6 +87,7 @@ export default async function SearchPage({
                 path={`/${lang}/search`}
                 source={{ type: "search", q }}
                 sort={sort}
+                toolbar={<SortSelect sort={sort} dict={dict} />}
               />
             )}
           </div>
