@@ -172,8 +172,6 @@
     "successTitle": "Thank you for your order",
     "successBody": "Your order number is {order}. We'll email you a confirmation.",
     "summary": "Order summary",
-    "billing": "Billing address",
-    "billingSame": "My billing and shipping address are the same",
     "getItBy": "Get it by tomorrow, {date}",
     "getItIn": "Get it in {time}",
     "twoHours": "2 hours",

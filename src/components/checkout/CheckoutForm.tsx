@@ -93,8 +93,6 @@ export function CheckoutForm({
   const [payment, setPayment] = useState<PaymentChoice | null>(null);
   const [choices, setChoices] = useState<PaymentChoice[]>([]);
   const [tomorrow, setTomorrow] = useState("");
-  const [billingSame, setBillingSame] = useState(true);
-  const [billing, setBilling] = useState<AddressInput>(emptyAddress);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -135,7 +133,6 @@ export function CheckoutForm({
         paymentMethod: payment.method,
         gateway: payment.gateway,
         shippingMethod: shipping,
-        billing: billingSame ? undefined : billing,
       });
       if (!result.ok) return setError(result.error);
       if (result.data.paymentUrl) {
@@ -197,42 +194,7 @@ export function CheckoutForm({
         </section>
 
         <section>
-          <StepHeading step={4}>{t.billing}</StepHeading>
-          <label className="flex cursor-pointer items-center gap-4 bg-blue-50 px-5 py-5 text-sm tracking-wide text-brand">
-            <input
-              type="checkbox"
-              checked={billingSame}
-              onChange={(e) => {
-                setBillingSame(e.target.checked);
-                if (!e.target.checked && !billing.firstname) {
-                  setBilling({ ...emptyAddress, firstname: address.firstname, lastname: address.lastname, telephone: address.telephone });
-                }
-              }}
-              className="size-6 accent-sky-500"
-            />
-            {t.billingSame}
-          </label>
-          {!billingSame && (
-            <div className="mt-4 grid gap-4 sm:ms-12 sm:grid-cols-2">
-              <Field label={dict.account.firstname} value={billing.firstname} onChange={(e) => setBilling((b) => ({ ...b, firstname: e.target.value }))} autoComplete="billing given-name" required />
-              <Field label={dict.account.lastname} value={billing.lastname} onChange={(e) => setBilling((b) => ({ ...b, lastname: e.target.value }))} autoComplete="billing family-name" required />
-              <Field label={dict.account.mobile} type="tel" inputMode="tel" value={billing.telephone} onChange={(e) => setBilling((b) => ({ ...b, telephone: e.target.value }))} autoComplete="billing tel" required />
-              <div className="hidden sm:block" />
-              <AreaSelect
-                governorates={governorates}
-                value={billing}
-                onChange={(area) => setBilling((b) => ({ ...b, ...area }))}
-                labels={{ governorate: t.governorate, area: t.area, chooseArea: t.chooseArea }}
-              />
-              <Field label={t.block} value={billing.block} onChange={(e) => setBilling((b) => ({ ...b, block: e.target.value }))} required />
-              <Field label={t.street} value={billing.street} onChange={(e) => setBilling((b) => ({ ...b, street: e.target.value }))} required />
-              <Field label={t.house} value={billing.house} onChange={(e) => setBilling((b) => ({ ...b, house: e.target.value }))} required />
-            </div>
-          )}
-        </section>
-
-        <section>
-          <StepHeading step={5}>{t.payment}</StepHeading>
+          <StepHeading step={4}>{t.payment}</StepHeading>
           <PaymentOptions
             choices={choices}
             value={payment?.key ?? ""}
