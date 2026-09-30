@@ -1,5 +1,6 @@
 import "server-only";
 import { imageHosts } from "@/lib/media";
+import { backendHeaders } from "@/lib/magento/backend-headers";
 
 /** https URL under /media/ on one of the configured image hosts. */
 export const isAllowedMedia = (url: URL) =>
@@ -13,7 +14,6 @@ export const isAllowedMedia = (url: URL) =>
  * non-secret reason when it couldn't be fetched.
  */
 export async function fetchMedia(target: URL): Promise<Response | string> {
-  const userAgent = process.env.MAGENTO_USER_AGENT;
   let url = target;
   for (let hop = 0; hop <= 3; hop++) {
     let res: Response;
@@ -21,7 +21,7 @@ export async function fetchMedia(target: URL): Promise<Response | string> {
       res = await fetch(url, {
         headers: {
           Accept: "image/avif,image/webp,image/*,*/*;q=0.8",
-          ...(userAgent ? { "User-Agent": userAgent } : {}),
+          ...backendHeaders(),
         },
         redirect: "manual",
         signal: AbortSignal.timeout(20000),

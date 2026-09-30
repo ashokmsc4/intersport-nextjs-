@@ -1,5 +1,6 @@
 import "server-only";
 import type { Locale } from "@/i18n/config";
+import { WAF_MESSAGE, backendHeaders, isWafChallenge } from "./backend-headers";
 
 const BASE_URL = (process.env.MAGENTO_BASE_URL ?? "").replace(/\/$/, "");
 const REVALIDATE = Number(process.env.MAGENTO_REVALIDATE_SECONDS ?? 300);
@@ -58,9 +59,6 @@ type RestOptions = {
   noStore?: boolean;
 };
 
-// Production's firewall rejects unknown User-Agents (including Node's default).
-const USER_AGENT = process.env.MAGENTO_USER_AGENT;
-
 async function request<T>(url: string, init: RequestInit): Promise<T> {
   if (!BASE_URL) throw new MagentoError("MAGENTO_BASE_URL is not set");
 
@@ -68,19 +66,28 @@ async function request<T>(url: string, init: RequestInit): Promise<T> {
     ...init,
     headers: {
       ...(init.headers as Record<string, string>),
-      ...(USER_AGENT ? { "User-Agent": USER_AGENT } : {}),
+      ...backendHeaders(),
     },
   });
-  if (!res.ok) {
+  const isJson = (res.headers.get("content-type") ?? "").includes("json");
+  if (!res.ok || !isJson) {
     let message = `Magento responded ${res.status}`;
-    try {
-      const body = (await res.json()) as {
-        message?: string;
-        parameters?: Record<string, string> | string[];
-      };
-      if (body.message) message = fillParameters(body.message, body.parameters);
-    } catch {
-      // Non-JSON error body; keep the status-only message.
+    if (isJson) {
+      try {
+        const body = (await res.json()) as {
+          message?: string;
+          parameters?: Record<string, string> | string[];
+        };
+        if (body.message) message = fillParameters(body.message, body.parameters);
+      } catch {
+        // Unreadable error body; keep the status-only message.
+      }
+    } else {
+      // An HTML page instead of JSON: the firewall's bot check, or an error page.
+      const body = await res.text().catch(() => "");
+      message = isWafChallenge(body)
+        ? WAF_MESSAGE
+        : `Magento returned a web page instead of data (${res.status})`;
     }
     throw new MagentoError(message, res.status);
   }

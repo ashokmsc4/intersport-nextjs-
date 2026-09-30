@@ -78,6 +78,11 @@ MAGENTO_USER_AGENT=...   # see below
 - Production's firewall returns 403 for unknown User-Agents, including Node's default. The mobile app sends
   `Dart/2.10 (dart:io)`, which is allowed; for the live storefront the hosting team should allow a dedicated
   agent and `MAGENTO_USER_AGENT` should be set to it.
+- Production's AWS WAF serves its bot check (a "Human Verification" HTML page) to requests from cloud hosts
+  such as Vercel, which have no fixed IP addresses to allowlist. The hosting team adds a WAF rule that allows
+  requests carrying a secret header; set `MAGENTO_ACCESS_HEADER_NAME` / `MAGENTO_ACCESS_HEADER_VALUE` to it.
+  Every Magento request (REST, settings, media, widgets) sends it. `/api/health` reports `blockedBy` when
+  the bot check is still served, and the server's outbound IP for the firewall logs.
 - Settings files (`data/categories.json` etc.) have no version folder on production either.
 - Media URLs on `prod.aaw.com` (admin node) and `admin.*` hosts are rewritten to `MAGENTO_BASE_URL`.
 - Magento's `/media` has hotlink protection: images requested by a browser from another domain get 403. Product
