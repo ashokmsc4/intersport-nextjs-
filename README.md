@@ -130,6 +130,7 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 - [x] Saved addresses (account page and checkout)
 - [x] Password reset request
 - [x] Search, category filters and sorting
+- [x] Category navigation: desktop mega menu (L1 → L2 columns → L3), mobile menu, breadcrumbs and sibling categories
 - [x] Cart side drawer (opens after add to cart and from the header)
 - [x] Home delivery / Click & Collect on the product page, pickup store shown in cart and preselected at checkout
 - [x] Footer (service highlights, customer service and about links, contact, social); content pages still link to Magento

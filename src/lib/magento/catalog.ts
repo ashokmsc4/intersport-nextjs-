@@ -255,3 +255,38 @@ export function effectivePrice(product: {
   const onSale = special > 0 && special < price && started && notEnded;
   return { price, final: onSale ? special : price, onSale };
 }
+
+/** Menu node: visible categories only, in shop order. */
+export type NavNode = { id: number; name: string; children: NavNode[] };
+
+function toNav(category: Category): NavNode {
+  return {
+    id: category.id,
+    name: category.name,
+    children: visibleChildren(category).map(toNav),
+  };
+}
+
+/** L1 → L2 → L3 menu tree (deeper levels are reached from category pages). */
+export async function getNavTree(locale: Locale): Promise<NavNode[]> {
+  const root = await magentoAppSettings<Category>("data/categories.json", { locale });
+  const trim = (node: NavNode, depth: number): NavNode => ({
+    ...node,
+    children: depth >= 3 ? [] : node.children.map((c) => trim(c, depth + 1)),
+  });
+  return visibleChildren(root).map((c) => trim(toNav(c), 1));
+}
+
+/** Categories from the top level down to `id` (for breadcrumbs), or [] if not found. */
+export async function getCategoryPath(locale: Locale, id: number): Promise<Category[]> {
+  const root = await magentoAppSettings<Category>("data/categories.json", { locale });
+  const walk = (node: Category, trail: Category[]): Category[] | null => {
+    if (node.id === id) return trail;
+    for (const child of node.children_data) {
+      const found = walk(child, [...trail, child]);
+      if (found) return found;
+    }
+    return null;
+  };
+  return walk(root, []) ?? [];
+}

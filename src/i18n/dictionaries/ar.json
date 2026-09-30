@@ -12,7 +12,13 @@
     "logout": "تسجيل الخروج",
     "hello": "مرحباً {name}",
     "searchPlaceholder": "ابحث عن المنتجات",
-    "searchButton": "بحث"
+    "searchButton": "بحث",
+    "menu": "القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "viewAll": "عرض كل {name}",
+    "home": "الرئيسية",
+    "breadcrumb": "مسار التنقل",
+    "categories": "الفئات"
   },
   "home": {
     "shopByCategory": "تسوق حسب الفئة",

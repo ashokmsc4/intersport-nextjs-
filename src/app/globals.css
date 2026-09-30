@@ -12,3 +12,9 @@ body {
   background: #ffffff;
   color: #171717;
 }
+
+/* A clicked mega-menu link closes its panel until the pointer leaves the menu. */
+nav[data-closed] .mega-panel {
+  visibility: hidden;
+  opacity: 0;
+}

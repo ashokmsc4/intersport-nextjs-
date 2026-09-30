@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
-import { getMenuCategories } from "@/lib/magento/catalog";
+import { getNavTree } from "@/lib/magento/catalog";
+import { MegaMenu } from "@/components/nav/MegaMenu";
+import { MobileMenu } from "@/components/nav/MobileMenu";
 import { getCartCount, getCustomerName } from "@/lib/session";
 import { CartButton } from "@/components/cart/CartDrawer";
 
@@ -13,15 +15,20 @@ export async function Header({
   dict: Dictionary;
 }) {
   const otherLocale: Locale = locale === "en" ? "ar" : "en";
-  const [name, count, categories] = await Promise.all([
+  const [name, count, tree] = await Promise.all([
     getCustomerName(),
     getCartCount(),
-    getMenuCategories(locale).catch(() => []),
+    getNavTree(locale).catch(() => []),
   ]);
 
   return (
-    <header className="border-b border-neutral-200">
+    <header className="relative border-b border-neutral-200">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
+        <MobileMenu
+          locale={locale}
+          tree={tree}
+          labels={{ menu: dict.nav.menu, closeMenu: dict.nav.closeMenu, viewAll: dict.nav.viewAll }}
+        />
         <Link href={`/${locale}`} className="shrink-0">
           {/* Official Intersport logo, from the Magento theme (images/logo.svg). */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -65,22 +72,11 @@ export async function Header({
           </Link>
         </nav>
       </div>
-      {categories.length > 0 && (
-        <nav className="mx-auto max-w-7xl overflow-x-auto px-4">
-          <ul className="flex gap-6 pb-3 text-sm font-semibold uppercase tracking-wide whitespace-nowrap">
-            {categories.map((category) => (
-              <li key={category.id}>
-                <Link
-                  href={`/${locale}/category/${category.id}`}
-                  className="hover:text-brand"
-                >
-                  {category.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
+      <MegaMenu
+        locale={locale}
+        tree={tree}
+        labels={{ categories: dict.nav.categories, viewAll: dict.nav.viewAll }}
+      />
     </header>
   );
 }

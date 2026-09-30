@@ -5,6 +5,7 @@ import { hasLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import {
   getCategory,
+  getCategoryPath,
   getCategoryProducts,
   getFilters,
   parseSort,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/magento/catalog";
 import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
+import { Breadcrumbs } from "@/components/nav/Breadcrumbs";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
 
@@ -41,9 +43,10 @@ export default async function CategoryPage({
   const { lang, id } = await params;
   const { locale, category } = await load(lang, id);
   const query = await searchParams;
-  const [dict, groups] = await Promise.all([
+  const [dict, groups, trail] = await Promise.all([
     getDictionary(locale),
     getFilters(locale, category.id).catch(() => []),
+    getCategoryPath(locale, category.id).catch(() => []),
   ]);
 
   const page = Math.max(1, Number(query.page) || 1);
@@ -59,10 +62,18 @@ export default async function CategoryPage({
     }),
     `category ${category.id} products`,
   );
-  const subcategories = visibleChildren(category);
+  // Show children; a last-level category shows its siblings so shoppers can move across.
+  const children = visibleChildren(category);
+  const parent = trail.length > 1 ? trail[trail.length - 2] : null;
+  const subcategories = children.length > 0 || !parent ? children : visibleChildren(parent);
 
   return (
     <section>
+      <Breadcrumbs
+        locale={locale}
+        trail={trail.map((c) => ({ id: c.id, name: c.name }))}
+        labels={{ home: dict.nav.home, breadcrumb: dict.nav.breadcrumb }}
+      />
       <h1 className="mb-4 text-2xl font-bold">{category.name}</h1>
 
       {subcategories.length > 0 && (
@@ -71,7 +82,8 @@ export default async function CategoryPage({
             <li key={sub.id}>
               <Link
                 href={`/${locale}/category/${sub.id}`}
-                className="block rounded-full border border-neutral-300 px-4 py-1 text-sm hover:border-brand hover:text-brand"
+                aria-current={sub.id === category.id ? "page" : undefined}
+                className="block rounded-full border border-neutral-300 px-4 py-1 text-sm hover:border-brand hover:text-brand aria-[current=page]:border-brand aria-[current=page]:bg-brand aria-[current=page]:text-white"
               >
                 {sub.name}
               </Link>

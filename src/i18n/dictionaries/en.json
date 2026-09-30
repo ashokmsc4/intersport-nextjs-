@@ -12,7 +12,13 @@
     "logout": "Sign out",
     "hello": "Hi, {name}",
     "searchPlaceholder": "Search products",
-    "searchButton": "Search"
+    "searchButton": "Search",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "viewAll": "View all {name}",
+    "home": "Home",
+    "breadcrumb": "Breadcrumb",
+    "categories": "Categories"
   },
   "home": {
     "shopByCategory": "Shop by category",
