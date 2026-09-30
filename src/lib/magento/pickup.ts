@@ -6,8 +6,12 @@ export type PickupStore = {
   id: string;
   name: string;
   address: string;
+  /** Area, e.g. "Salmiya". */
   city: string;
+  /** Governorate. */
+  state: string;
   phone: string;
+  email: string;
   hoursToday: string;
   qty: number;
 };
@@ -21,7 +25,9 @@ type Availability = {
       name: string;
       address: string;
       city: string;
+      state?: string;
       phone: string;
+      email?: string;
       working_time_today?: string;
       freepickupstatus?: boolean;
     };
@@ -44,7 +50,9 @@ export async function getPickupAvailability(locale: Locale, productId: string) {
       name: i.location.name,
       address: i.location.address,
       city: i.location.city,
+      state: i.location.state ?? "",
       phone: i.location.phone,
+      email: i.location.email ?? "",
       hoursToday: i.location.working_time_today ?? "",
       qty: i.qty,
     }));

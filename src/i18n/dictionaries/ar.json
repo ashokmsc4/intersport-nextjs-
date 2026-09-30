@@ -72,7 +72,11 @@
     "addToCart": "أضف إلى السلة",
     "adding": "جارٍ الإضافة…",
     "added": "تمت الإضافة إلى سلتك.",
-    "viewCart": "عرض السلة"
+    "viewCart": "عرض السلة",
+    "sizeGuide": "دليل المقاسات",
+    "decrease": "إنقاص الكمية",
+    "increase": "زيادة الكمية",
+    "sizeSystem": "نظام المقاسات"
   },
   "account": {
     "loginTitle": "تسجيل الدخول",
@@ -221,10 +225,10 @@
     "showFilters": "التصفية"
   },
   "delivery": {
-    "title": "كيف تريد استلامه؟",
+    "title": "خيار التوصيل",
     "home": "التوصيل للمنزل",
     "homeNote": "يتم التوصيل إلى عنوانك",
-    "pickup": "اطلب واستلم",
+    "pickup": "استلام مجاني",
     "pickupNote": "استلام مجاني من الفرع",
     "chooseStore": "اختر الفرع",
     "inStock": "متوفر {qty}",
@@ -233,7 +237,23 @@
     "loadingStores": "جارٍ التحقق من الفروع…",
     "chooseSizeFirst": "اختر المقاس لعرض الفروع",
     "pickupFrom": "الاستلام من: {store}",
-    "homeUnavailable": "التوصيل للمنزل غير متاح لهذا المنتج"
+    "homeUnavailable": "التوصيل للمنزل غير متاح لهذا المنتج",
+    "pickupFromStore": "الاستلام من {store}",
+    "pickupAnyStore": "الاستلام من متجر قريب منك",
+    "available": "متوفر",
+    "unavailable": "غير متاح",
+    "checkOtherStores": "تحقق من المتاجر الأخرى",
+    "selectStore": "يرجى اختيار متجر",
+    "selectLocation": "يرجى اختيار الموقع",
+    "area": "المنطقة",
+    "governorate": "المحافظة",
+    "address": "العنوان",
+    "telephone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "continue": "متابعة",
+    "close": "إغلاق",
+    "qty": "الكمية",
+    "storeChoices": "المتاجر"
   },
   "miniCart": {
     "title": "حقيبة التسوق",

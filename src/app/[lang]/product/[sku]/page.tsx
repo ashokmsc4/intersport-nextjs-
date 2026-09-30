@@ -10,6 +10,8 @@ import {
   getRecommendations,
 } from "@/lib/magento/catalog";
 import type { ProductDetail } from "@/lib/magento/types";
+import { getSizeGuideHtml, getSizeRegions } from "@/lib/magento/sizes";
+import { isOptimizable } from "@/lib/media";
 import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
@@ -84,9 +86,13 @@ export default async function ProductPage({
   const { locale, product } = await loadProduct(lang, decodeURIComponent(sku));
   const dict = await getDictionary(locale);
 
-  const recommendations = await getRecommendations(locale, product.sku).catch(
-    () => [] as ProductDetail[],
-  );
+  const sized = (product.childrens ?? []).length > 0;
+  const [recommendations, sizeRegions, sizeGuide] = await Promise.all([
+    getRecommendations(locale, product.sku).catch(() => [] as ProductDetail[]),
+    // Website widgets: optional, so a failure just hides them.
+    sized ? getSizeRegions(String(product.id)).catch(() => null) : null,
+    sized ? getSizeGuideHtml(String(product.id)).catch(() => null) : null,
+  ]);
 
   // Gallery paths are served from the storefront host; `image` is a fallback.
   const gallery = [
@@ -97,9 +103,14 @@ export default async function ProductPage({
     ),
   ];
   const sizes = sizeOptions(product);
-  const color = product.childrens?.length
-    ? option(product.childrens[0], "color")?.label
-    : option(product, "color")?.label;
+  // Magento labels mix case ("rose Dustilluminate Yellow"); show them in title case.
+  const color = (
+    product.childrens?.length
+      ? option(product.childrens[0], "color")?.label
+      : option(product, "color")?.label
+  )
+    ?.toLowerCase()
+    .replace(/(^|[\s/-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase());
   const inStock = sizes.length
     ? sizes.some((s) => s.available)
     : isAvailable(product);
@@ -120,7 +131,7 @@ export default async function ProductPage({
           ))}
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           {product.brand && (
             <p className="text-sm uppercase tracking-wide text-neutral-500">
               {product.brand}
@@ -137,25 +148,35 @@ export default async function ProductPage({
           </p>
 
           {color && (
-            <p className="text-sm">
-              <span className="font-semibold">{dict.product.color}:</span>{" "}
-              {color}
-            </p>
+            <section className="flex flex-col gap-4">
+              <p className="text-sm">
+                <span className="me-4 font-bold uppercase tracking-wider">{dict.product.color}</span>
+                <span>{color}</span>
+              </p>
+              {gallery[0] && (
+                <span className="block size-16 rounded border border-neutral-400 p-1" title={color}>
+                  <ProductImage src={gallery[0]} alt={color} sizes="64px" className="size-full" />
+                </span>
+              )}
+            </section>
           )}
 
-          <p
-            className={`text-sm font-medium ${inStock ? "text-green-700" : "text-brand-accent"}`}
-          >
-            {inStock ? dict.product.inStock : dict.product.outOfStock}
-          </p>
+          {!inStock && (
+            <p className="text-sm font-medium text-brand-accent">{dict.product.outOfStock}</p>
+          )}
 
           <AddToCart
             locale={locale}
             sku={product.sku}
             productId={String(product.id)}
+            name={product.name}
+            image={gallery[0] ?? null}
+            imageOptimized={gallery[0] ? isOptimizable(gallery[0]) : false}
+            color={color}
             sizes={sizes}
+            sizeRegions={sizeRegions}
+            hasSizeGuide={Boolean(sizeGuide)}
             inStock={inStock}
-            initialAvailability={null}
             dict={{ product: dict.product, errors: dict.errors, delivery: dict.delivery }}
           />
 

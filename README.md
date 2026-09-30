@@ -64,6 +64,8 @@ Endpoints in use:
 | Order history | `V1/mstore/me/orders` (scoped to the customer token; detail = same list filtered by `increment_id`) |
 | Saved addresses | `V3/customer/address/{customerId}` (list), `V3/customer/address` (create), `V3/customer/address/{addressId}` (delete) |
 | Click & Collect | `V1/storepickup_msi/{productId}/getAvailabilityByProduct` (stores with stock; per size for configurables); the store's location id is sent as the cart item's `source_code`, home delivery as `home_delivery`; checkout then offers `amstorepickup` |
+| Size systems (US / UK / EU) | website widget `/sizemapregion/sizemapregion/render/?product_id=` (per-product conversion; EU selected by default) |
+| Size guide | website widget `/sizechart/sizechart/render/?product_id=`, served by `/api/size-guide/{id}` as a standalone page in a sandboxed frame |
 | Password reset | `V1/customers/password` (Magento emails a reset link; `MAGENTO_WEBSITE_ID`, default 3) |
 
 ### Running against production

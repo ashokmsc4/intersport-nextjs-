@@ -156,13 +156,17 @@ export function magentoAppSettings<T>(
  */
 export function magentoStorefront<T>(
   path: string,
-  { query, timeoutMs = 5000 }: { query?: URLSearchParams; timeoutMs?: number } = {},
+  {
+    query,
+    timeoutMs = 5000,
+    tags,
+  }: { query?: URLSearchParams; timeoutMs?: number; tags?: string[] } = {},
 ): Promise<T> {
   const qs = query?.toString();
   return request<T>(`${BASE_URL}/${path.replace(/^\//, "")}${qs ? `?${qs}` : ""}`, {
     headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
     signal: AbortSignal.timeout(timeoutMs),
-    next: { revalidate: REVALIDATE, tags: ["search"] },
+    next: { revalidate: REVALIDATE, tags },
   });
 }
 

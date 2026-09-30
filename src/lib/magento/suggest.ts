@@ -28,6 +28,7 @@ async function suggestProducts(locale: Locale, q: string) {
     const data = await magentoStorefront<AutocompleteResponse>("searchautocomplete/ajax/suggest/", {
       query: new URLSearchParams({ q }),
       timeoutMs: 4000,
+      tags: ["search"],
     });
     const index = data.indexes?.find((i) => i.identifier === "magento_catalog_product");
     const ids = [

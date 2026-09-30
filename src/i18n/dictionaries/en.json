@@ -72,7 +72,11 @@
     "addToCart": "Add to cart",
     "adding": "Adding…",
     "added": "Added to your cart.",
-    "viewCart": "View cart"
+    "viewCart": "View cart",
+    "sizeGuide": "Size guide",
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity",
+    "sizeSystem": "Size system"
   },
   "account": {
     "loginTitle": "Sign in",
@@ -221,10 +225,10 @@
     "showFilters": "Filters"
   },
   "delivery": {
-    "title": "How do you want it?",
+    "title": "Delivery option",
     "home": "Home delivery",
     "homeNote": "Delivered to your address",
-    "pickup": "Click & Collect",
+    "pickup": "Free pickup",
     "pickupNote": "Free pickup from a store",
     "chooseStore": "Choose a store",
     "inStock": "{qty} in stock",
@@ -233,7 +237,23 @@
     "loadingStores": "Checking stores…",
     "chooseSizeFirst": "Choose a size to see stores",
     "pickupFrom": "Pickup: {store}",
-    "homeUnavailable": "Home delivery isn't available for this item"
+    "homeUnavailable": "Home delivery isn't available for this item",
+    "pickupFromStore": "Pickup from {store}",
+    "pickupAnyStore": "Pickup from a store near you",
+    "available": "In stock",
+    "unavailable": "Not available",
+    "checkOtherStores": "Check other stores",
+    "selectStore": "Please select a store",
+    "selectLocation": "Please select location",
+    "area": "Area",
+    "governorate": "Governorate",
+    "address": "Address",
+    "telephone": "Telephone",
+    "email": "Email",
+    "continue": "Continue",
+    "close": "Close",
+    "qty": "Qty",
+    "storeChoices": "Stores"
   },
   "miniCart": {
     "title": "Your bag",
