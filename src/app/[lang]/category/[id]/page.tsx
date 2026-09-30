@@ -120,6 +120,9 @@ export default async function CategoryPage({
               page={page}
               pageSize={PAGE_SIZE}
               params={query}
+              path={`/${locale}/category/${category.id}`}
+              source={{ type: "category", categoryId: category.id, filters }}
+              sort={sort}
             />
           )}
         </div>

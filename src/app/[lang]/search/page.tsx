@@ -85,6 +85,9 @@ export default async function SearchPage({
                 page={page}
                 pageSize={PAGE_SIZE}
                 params={query}
+                path={`/${lang}/search`}
+                source={{ type: "search", q }}
+                sort={sort}
               />
             )}
           </div>

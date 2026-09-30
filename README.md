@@ -108,6 +108,10 @@ Browsers load Magento images directly from the CDNs; neither Vercel nor the Next
   from the cache and refreshed in the background (`MAGENTO_REVALIDATE_SECONDS`); Click & Collect stock is
   loaded live when the shopper picks it.
 - Category and search pages depend on filters in the URL, so they render per request from cached Magento data.
+- Category and search listings use infinite scroll: the server renders the first 24 products, later pages
+  load through the `loadListingPage` server action as the shopper nears the end (`InfiniteProducts`). The
+  list and scroll position are kept in sessionStorage for the back button; a `?page=` "Load more" link
+  remains for crawlers.
 - Product cards prefetch on hover/touch (`HoverPrefetchLink`), not on scroll, so a grid doesn't render 24 pages.
 - `src/app/[lang]/loading.tsx` shows an instant skeleton while a page that isn't cached yet renders.
 - On Vercel, set the Functions region next to the Magento server: production is hosted in Ireland, so use
@@ -146,7 +150,7 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run build`.
 ## Roadmap
 
 - [x] Project setup, locale routing, Magento REST client
-- [x] Home page category grid, category page with products and pagination
+- [x] Home page category grid, category page with products and infinite scroll
 - [ ] Category filters and sorting (`V1/m2-attributes`)
 - [x] Product detail page (gallery, price, sizes, recommendations)
 - [x] Home page from the app configuration

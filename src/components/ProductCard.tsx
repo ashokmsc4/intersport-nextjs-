@@ -1,18 +1,9 @@
-import type { Locale } from "@/i18n/config";
 import { productImageUrl } from "@/lib/magento/client";
 import { attr, effectivePrice } from "@/lib/magento/catalog";
 import type { Product, ProductDetail } from "@/lib/magento/types";
-import { Price } from "./Price";
-import { ProductImage } from "./ProductImage";
-import { HoverPrefetchLink } from "./HoverPrefetchLink";
+import { ProductTile, type ProductCardData } from "./ProductTile";
 
-export type ProductCardData = {
-  sku: string;
-  name: string;
-  brand?: string | null;
-  image: string | null;
-  price: ReturnType<typeof effectivePrice>;
-};
+export type { ProductCardData };
 
 /** Normalizes an item from `V1/mstore/products`. */
 export function cardFromListItem(product: Product): ProductCardData {
@@ -45,34 +36,5 @@ export function cardFromDetail(product: ProductDetail): ProductCardData {
   };
 }
 
-export function ProductCard({
-  product,
-  locale,
-}: {
-  product: ProductCardData;
-  locale: Locale;
-}) {
-  return (
-    <HoverPrefetchLink
-      href={`/${locale}/product/${encodeURIComponent(product.sku)}`}
-      // Product pages are cached (ISR); prefetch on hover so the click is instant.
-      className="group flex flex-col gap-2"
-    >
-      <ProductImage
-        src={product.image}
-        alt={product.name}
-        sizes="(min-width: 1280px) 20vw, (min-width: 640px) 30vw, 50vw"
-        className="aspect-square rounded-lg transition-transform group-hover:[&_img]:scale-105"
-      />
-      {product.brand && (
-        <p className="text-xs uppercase tracking-wide text-neutral-500">
-          {product.brand}
-        </p>
-      )}
-      <h2 className="line-clamp-2 text-sm font-medium group-hover:text-brand">
-        {product.name}
-      </h2>
-      <Price {...product.price} locale={locale} className="text-sm" />
-    </HoverPrefetchLink>
-  );
-}
+/** Product card for server components; see ProductTile. */
+export const ProductCard = ProductTile;

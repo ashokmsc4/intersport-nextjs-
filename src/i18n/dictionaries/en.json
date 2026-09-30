@@ -56,6 +56,10 @@
   "category": {
     "results": "{count} products",
     "empty": "No products in this category yet.",
+    "showing": "Showing {shown} of {total}",
+    "loadMore": "Load more",
+    "loadingMore": "Loading more products…",
+    "retry": "Couldn't load more. Try again",
     "previous": "Previous",
     "next": "Next"
   },
