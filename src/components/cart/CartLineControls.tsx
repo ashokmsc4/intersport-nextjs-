@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { removeItemAction, updateQtyAction } from "@/app/actions/cart";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { errorText } from "@/i18n/errors";
+import { useCartDrawer } from "@/components/cart/CartDrawer";
 
 export function CartLineControls({
   locale,
@@ -23,8 +24,17 @@ export function CartLineControls({
   sourceCode: string;
   dict: Pick<Dictionary, "cart" | "product" | "errors">;
 }) {
-  const [updateState, update, updating] = useActionState(updateQtyAction, undefined);
-  const [removeState, remove, removing] = useActionState(removeItemAction, undefined);
+  const { setCount } = useCartDrawer();
+  // Keep the header count in step (the page itself re-renders from the server).
+  const withCount =
+    (action: typeof updateQtyAction): typeof updateQtyAction =>
+    async (prev, form) => {
+      const result = await action(prev, form);
+      if (result?.ok) setCount(result.count);
+      return result;
+    };
+  const [updateState, update, updating] = useActionState(withCount(updateQtyAction), undefined);
+  const [removeState, remove, removing] = useActionState(withCount(removeItemAction), undefined);
   const error =
     (updateState?.ok === false && updateState.error) ||
     (removeState?.ok === false && removeState.error) ||

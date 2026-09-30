@@ -200,7 +200,14 @@
     "title": "بحث",
     "resultsFor": "نتائج البحث عن «{q}»",
     "noResults": "لا توجد منتجات تطابق «{q}».",
-    "prompt": "عمّ تبحث؟"
+    "prompt": "عمّ تبحث؟",
+    "suggestProducts": "المنتجات",
+    "suggestCategories": "الفئات",
+    "viewAllResults": "عرض كل النتائج ({count})",
+    "viewResultsFor": "البحث عن “{q}”",
+    "noSuggestions": "لا توجد اقتراحات لـ “{q}”",
+    "searching": "جارٍ البحث…",
+    "clear": "مسح البحث"
   },
   "filters": {
     "title": "التصفية",

@@ -9,12 +9,18 @@ import {
   getProductDetail,
   getRecommendations,
 } from "@/lib/magento/catalog";
-import { getPickupAvailability } from "@/lib/magento/pickup";
 import type { ProductDetail } from "@/lib/magento/types";
 import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
+
+// Product pages are rendered on first visit, then served from the cache and
+// refreshed in the background (MAGENTO_REVALIDATE_SECONDS). Store stock is live
+// data, so AddToCart loads it in the browser when Click & Collect is chosen.
+export function generateStaticParams() {
+  return [];
+}
 
 const loadProduct = cache(async (lang: string, sku: string) => {
   if (!hasLocale(lang) || !sku) notFound();
@@ -78,14 +84,9 @@ export default async function ProductPage({
   const { locale, product } = await loadProduct(lang, decodeURIComponent(sku));
   const dict = await getDictionary(locale);
 
-  const hasChildren = (product.childrens ?? []).length > 0;
-  const [recommendations, availability] = await Promise.all([
-    getRecommendations(locale, product.sku).catch(() => [] as ProductDetail[]),
-    // Simple products: preload store stock. Sized products load it per size.
-    hasChildren
-      ? Promise.resolve(null)
-      : getPickupAvailability(locale, String(product.id)).catch(() => null),
-  ]);
+  const recommendations = await getRecommendations(locale, product.sku).catch(
+    () => [] as ProductDetail[],
+  );
 
   // Gallery paths are served from the storefront host; `image` is a fallback.
   const gallery = [
@@ -154,7 +155,7 @@ export default async function ProductPage({
             productId={String(product.id)}
             sizes={sizes}
             inStock={inStock}
-            initialAvailability={availability}
+            initialAvailability={null}
             dict={{ product: dict.product, errors: dict.errors, delivery: dict.delivery }}
           />
 

@@ -150,6 +150,22 @@ export function magentoAppSettings<T>(
   });
 }
 
+/**
+ * Reads a JSON endpoint of the Magento storefront (outside /rest), e.g. the search
+ * autocomplete. Cached like REST GETs; gives up after `timeoutMs`.
+ */
+export function magentoStorefront<T>(
+  path: string,
+  { query, timeoutMs = 5000 }: { query?: URLSearchParams; timeoutMs?: number } = {},
+): Promise<T> {
+  const qs = query?.toString();
+  return request<T>(`${BASE_URL}/${path.replace(/^\//, "")}${qs ? `?${qs}` : ""}`, {
+    headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+    signal: AbortSignal.timeout(timeoutMs),
+    next: { revalidate: REVALIDATE, tags: ["search"] },
+  });
+}
+
 // Backend-only hosts that some endpoints put in image URLs (staging admin, production admin node).
 const BACKEND_MEDIA_HOSTS = (process.env.MAGENTO_BACKEND_MEDIA_HOSTS ?? "prod.aaw.com")
   .split(",")

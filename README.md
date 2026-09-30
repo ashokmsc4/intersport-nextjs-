@@ -54,6 +54,7 @@ Endpoints in use:
 | Category tree, menu | `/media/mobile-app/intersport/{store}/data/categories.json` |
 | Category products | `V1/mstore/products` (configurable items list with price 0; `minimal_price` is used); filters and sorting via `filter_groups` / `sortOrders` |
 | Category filters | `V1/m2-attributes?category_id=` (brands, sports, department, sizes, product type) |
+| Search suggestions | `/api/suggest` → the website's autocomplete (`/searchautocomplete/ajax/suggest/`, Mirasvit; product ids from its price HTML) then those products by id from `V1/mstore/products` for the store view's names and prices; categories matched from the menu tree |
 | Search | one word or SKU: `V1/mstore/products` name/SKU `like`; several words: `V1/search` (full-text, relevance order) then the products by id |
 | Product page | `V1/aaw/productdetail/{sku}` (looked up by SKU; sizes and colours come from `childrens`) |
 | You might also like | `V1/mstore/recommend-products/sku/{sku}` |
@@ -92,8 +93,17 @@ Locally the built-in optimizer is used. Override with `IMAGE_PROXY=true|false`.
 
 ### Performance
 
-- `src/app/[lang]/loading.tsx` shows an instant skeleton and stops link prefetching at that boundary.
-- Product cards don't prefetch: each product page needs a `productdetail` call (≈8s cold on production).
+- Pages don't read cookies, so they can be cached: the header gets the shopper's name and cart count in the
+  browser from `/api/session` (`CartDrawerProvider`). Only cart, checkout and account pages are per-shopper.
+- Home is prerendered and refreshed every 5 minutes. Product pages are rendered on first visit, then served
+  from the cache and refreshed in the background (`MAGENTO_REVALIDATE_SECONDS`); Click & Collect stock is
+  loaded live when the shopper picks it.
+- Category and search pages depend on filters in the URL, so they render per request from cached Magento data.
+- Product cards prefetch on hover/touch (`HoverPrefetchLink`), not on scroll, so a grid doesn't render 24 pages.
+- `src/app/[lang]/loading.tsx` shows an instant skeleton while a page that isn't cached yet renders.
+- On Vercel, set the Functions region close to the Magento server and the shoppers (Dubai, `dxb1`); the
+  default (Washington, `iad1`) adds a round trip across the world to every uncached Magento call.
+- Measure with `npm run build && npm start`; `npm run dev` compiles each page on first visit and is always slower.
 
 ### Session
 

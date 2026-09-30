@@ -4,8 +4,10 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import { getNavTree } from "@/lib/magento/catalog";
 import { MegaMenu } from "@/components/nav/MegaMenu";
 import { MobileMenu } from "@/components/nav/MobileMenu";
-import { getCartCount, getCustomerName } from "@/lib/session";
-import { CartButton } from "@/components/cart/CartDrawer";
+import { AccountButton, CartButton } from "@/components/cart/CartDrawer";
+import { SearchIcon } from "@/components/icons";
+import { SearchBox } from "@/components/search/SearchBox";
+import { imageHosts } from "@/lib/media";
 
 export async function Header({
   locale,
@@ -15,11 +17,9 @@ export async function Header({
   dict: Dictionary;
 }) {
   const otherLocale: Locale = locale === "en" ? "ar" : "en";
-  const [name, count, tree] = await Promise.all([
-    getCustomerName(),
-    getCartCount(),
-    getNavTree(locale).catch(() => []),
-  ]);
+  // No cookies are read here, so pages can be served from the cache.
+  // The account name and cart count load in the browser (CartDrawerProvider).
+  const tree = await getNavTree(locale).catch(() => []);
 
   return (
     <header className="relative border-b border-neutral-200">
@@ -40,34 +40,31 @@ export async function Header({
             className="h-auto w-32 sm:w-44"
           />
         </Link>
-        <form
-          action={`/${locale}/search`}
-          role="search"
+        <SearchBox
+          locale={locale}
+          dict={dict}
+          imageHosts={imageHosts()}
           className="hidden flex-1 md:flex md:max-w-md"
-        >
-          <input
-            type="search"
-            name="q"
-            aria-label={dict.nav.searchPlaceholder}
-            placeholder={dict.nav.searchPlaceholder}
-            className="w-full rounded-s border border-neutral-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            className="rounded-e bg-brand px-4 text-sm font-semibold text-white"
+        />
+        <nav className="flex items-center gap-2 text-sm whitespace-nowrap sm:gap-3">
+          <Link
+            href={`/${locale}/search`}
+            aria-label={dict.nav.search}
+            title={dict.nav.search}
+            className="p-1 hover:text-brand md:hidden"
           >
-            {dict.nav.searchButton}
-          </button>
-        </form>
-        <nav className="flex items-center gap-3 text-sm whitespace-nowrap sm:gap-4">
-          <Link href={`/${locale}/search`} className="md:hidden">
-            {dict.nav.search}
+            <SearchIcon />
           </Link>
-          <Link href={name ? `/${locale}/account` : `/${locale}/account/login`}>
-            {name ? dict.nav.hello.replace("{name}", name) : dict.nav.login}
-          </Link>
-          <CartButton locale={locale} label={dict.nav.cart} count={count} />
-          <Link href={`/${otherLocale}`} hrefLang={otherLocale}>
+          <AccountButton
+            locale={locale}
+            labels={{ login: dict.nav.login, account: dict.nav.account, hello: dict.nav.hello }}
+          />
+          <CartButton locale={locale} label={dict.nav.cart} />
+          <Link
+            href={`/${otherLocale}`}
+            hrefLang={otherLocale}
+            className="rounded border border-neutral-300 px-2 py-1 text-xs font-semibold hover:border-brand hover:text-brand"
+          >
             {dict.nav.switchLanguage}
           </Link>
         </nav>

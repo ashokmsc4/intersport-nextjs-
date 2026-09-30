@@ -7,6 +7,8 @@ import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductResults } from "@/components/catalog/ProductResults";
+import { SearchBox } from "@/components/search/SearchBox";
+import { imageHosts } from "@/lib/media";
 
 const PAGE_SIZE = 24;
 
@@ -48,19 +50,16 @@ export default async function SearchPage({
       <h1 className="mb-6 text-2xl font-bold">
         {q ? dict.search.resultsFor.replace("{q}", q) : dict.search.prompt}
       </h1>
-      <form role="search" className="mb-8 flex max-w-xl">
-        <input
-          type="search"
-          name="q"
-          defaultValue={q}
-          aria-label={dict.nav.searchPlaceholder}
-          placeholder={dict.nav.searchPlaceholder}
-          className="w-full rounded-s border border-neutral-300 px-3 py-2"
-        />
-        <button type="submit" className="rounded-e bg-brand px-4 font-semibold text-white">
-          {dict.nav.searchButton}
-        </button>
-      </form>
+      <SearchBox
+        // Remount per query so the field shows the query being viewed.
+        key={q}
+        locale={lang}
+        dict={dict}
+        imageHosts={imageHosts()}
+        defaultValue={q}
+        autoFocus={!q}
+        className="mb-8 max-w-xl"
+      />
       {q && (
         <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
           <aside>

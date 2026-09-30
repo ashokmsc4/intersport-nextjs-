@@ -1,10 +1,10 @@
-import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import { productImageUrl } from "@/lib/magento/client";
 import { attr, effectivePrice } from "@/lib/magento/catalog";
 import type { Product, ProductDetail } from "@/lib/magento/types";
 import { Price } from "./Price";
 import { ProductImage } from "./ProductImage";
+import { HoverPrefetchLink } from "./HoverPrefetchLink";
 
 export type ProductCardData = {
   sku: string;
@@ -53,10 +53,9 @@ export function ProductCard({
   locale: Locale;
 }) {
   return (
-    <Link
+    <HoverPrefetchLink
       href={`/${locale}/product/${encodeURIComponent(product.sku)}`}
-      // Each product page costs a slow productdetail call; don't prefetch whole grids.
-      prefetch={false}
+      // Product pages are cached (ISR); prefetch on hover so the click is instant.
       className="group flex flex-col gap-2"
     >
       <ProductImage
@@ -74,6 +73,6 @@ export function ProductCard({
         {product.name}
       </h2>
       <Price {...product.price} locale={locale} className="text-sm" />
-    </Link>
+    </HoverPrefetchLink>
   );
 }

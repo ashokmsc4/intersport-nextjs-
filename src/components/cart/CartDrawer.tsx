@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -20,9 +21,21 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { formatPrice } from "@/lib/format";
 import { ProductImage } from "@/components/ProductImage";
+import { BagIcon, UserIcon } from "@/components/icons";
 
-type Ctx = { openCart: (options?: { added?: boolean }) => void };
-const CartDrawerContext = createContext<Ctx>({ openCart: () => {} });
+type Ctx = {
+  openCart: (options?: { added?: boolean }) => void;
+  /** Signed-in first name, or null (loaded in the browser via /api/session). */
+  name: string | null;
+  count: number;
+  setCount: (count: number) => void;
+};
+const CartDrawerContext = createContext<Ctx>({
+  openCart: () => {},
+  name: null,
+  count: 0,
+  setCount: () => {},
+});
 
 export const useCartDrawer = () => useContext(CartDrawerContext);
 
@@ -44,13 +57,36 @@ export function CartDrawerProvider({
   const [cart, setCart] = useState<MiniCart | null>(null);
   const [pending, startTransition] = useTransition();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [session, setSession] = useState<{ name: string | null; count: number }>({
+    name: null,
+    count: 0,
+  });
+  const setCount = useCallback((count: number) => setSession((s) => ({ ...s, count })), []);
+  const pathname = usePathname();
+
+  // Pages are cached without cookies; the header's name and count come from here.
+  // Re-read on navigation so sign-in, sign-out and checkout are reflected.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/session", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setSession({ name: data.name ?? null, count: Number(data.count) || 0 });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   const load = useCallback(
     () =>
       startTransition(async () => {
-        setCart(await miniCartAction(locale));
+        const next = await miniCartAction(locale);
+        setCart(next);
+        setCount(next.count);
       }),
-    [locale],
+    [locale, setCount],
   );
 
   const openCart = useCallback(
@@ -81,7 +117,9 @@ export function CartDrawerProvider({
       form.set("locale", locale);
       for (const [k, v] of Object.entries(fields)) form.set(k, v);
       await action(undefined, form);
-      setCart(await miniCartAction(locale));
+      const next = await miniCartAction(locale);
+      setCart(next);
+      setCount(next.count);
     });
 
   const optimized = (src: string | null) => {
@@ -94,7 +132,7 @@ export function CartDrawerProvider({
   const t = dict.miniCart;
 
   return (
-    <CartDrawerContext.Provider value={{ openCart }}>
+    <CartDrawerContext.Provider value={{ openCart, name: session.name, count: session.count, setCount }}>
       {children}
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={t.title}>
@@ -240,17 +278,9 @@ export function CartDrawerProvider({
   );
 }
 
-/** Header cart link: opens the drawer, but still works as a plain link without JavaScript. */
-export function CartButton({
-  locale,
-  label,
-  count,
-}: {
-  locale: string;
-  label: string;
-  count: number;
-}) {
-  const { openCart } = useCartDrawer();
+/** Header bag icon with item count: opens the drawer (plain link without JavaScript). */
+export function CartButton({ locale, label }: { locale: string; label: string }) {
+  const { openCart, count } = useCartDrawer();
   return (
     <Link
       href={`/${locale}/cart`}
@@ -258,14 +288,39 @@ export function CartButton({
         e.preventDefault();
         openCart();
       }}
-      className="relative font-medium"
+      aria-label={count > 0 ? `${label} (${count})` : label}
+      title={label}
+      className="relative p-1 hover:text-brand"
     >
-      {label}
+      <BagIcon />
       {count > 0 && (
-        <span className="ms-1 rounded-full bg-brand-accent px-2 py-0.5 text-xs text-white">
+        <span className="absolute -end-1 -top-1 min-w-5 rounded-full bg-brand-accent px-1 text-center text-[11px] leading-5 font-semibold text-white">
           {count}
         </span>
       )}
+    </Link>
+  );
+}
+
+/** Header account icon: sign-in page, or the account page once signed in. */
+export function AccountButton({
+  locale,
+  labels,
+}: {
+  locale: string;
+  labels: { login: string; account: string; hello: string };
+}) {
+  const { name } = useCartDrawer();
+  const label = name ? labels.hello.replace("{name}", name) : labels.login;
+  return (
+    <Link
+      href={name ? `/${locale}/account` : `/${locale}/account/login`}
+      aria-label={label}
+      title={label}
+      className="flex items-center gap-1.5 p-1 hover:text-brand"
+    >
+      <UserIcon />
+      {name && <span className="hidden max-w-24 truncate text-sm xl:inline">{name}</span>}
     </Link>
   );
 }

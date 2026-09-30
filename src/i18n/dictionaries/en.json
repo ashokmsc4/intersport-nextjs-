@@ -200,7 +200,14 @@
     "title": "Search",
     "resultsFor": "Results for “{q}”",
     "noResults": "No products match “{q}”.",
-    "prompt": "What are you looking for?"
+    "prompt": "What are you looking for?",
+    "suggestProducts": "Products",
+    "suggestCategories": "Categories",
+    "viewAllResults": "View all {count} results",
+    "viewResultsFor": "Search for “{q}”",
+    "noSuggestions": "No suggestions for “{q}”",
+    "searching": "Searching…",
+    "clear": "Clear search"
   },
   "filters": {
     "title": "Filters",
