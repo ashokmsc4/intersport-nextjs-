@@ -25,7 +25,17 @@
     "backendUnavailable": "تعذر الاتصال بخادم Magento.",
     "shopNow": "تسوق الآن",
     "viewAll": "عرض الكل",
-    "endsOn": "ينتهي {date}"
+    "endsOn": "ينتهي {date}",
+    "endsIn": "ينتهي خلال",
+    "days": "يوم",
+    "hours": "ساعة",
+    "minutes": "دقيقة",
+    "seconds": "ثانية",
+    "featured": "عروض مميزة",
+    "slide": "الشريحة {n} من {total}",
+    "previous": "السابق",
+    "next": "التالي",
+    "explore": "اكتشف"
   },
   "footer": {
     "rights": "جميع الحقوق محفوظة.",

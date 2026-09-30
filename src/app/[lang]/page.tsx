@@ -13,6 +13,10 @@ import { Banner } from "@/components/Banner";
 import { settle } from "@/lib/magento/diagnose";
 import { ProductCard, cardFromListItem } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
+import { ArrowIcon } from "@/components/icons";
+import { Carousel } from "@/components/home/Carousel";
+import { Countdown } from "@/components/home/Countdown";
+import { Rail } from "@/components/home/Rail";
 import { productImageUrl } from "@/lib/magento/client";
 
 // Regenerate so a build without backend access does not freeze the error state.
@@ -50,6 +54,27 @@ function Linked({
   );
 }
 
+/** Section title with the brand's red accent bar and an optional View all link. */
+function SectionHeader({ title, href, action }: { title: string; href?: string; action?: string }) {
+  return (
+    <div className="mb-5 flex items-end justify-between gap-4">
+      <h2 className="flex items-center gap-3 text-xl font-bold uppercase tracking-wide sm:text-2xl">
+        <span aria-hidden className="h-6 w-1.5 rounded-full bg-brand-accent" />
+        {title}
+      </h2>
+      {href && action && (
+        <Link
+          href={href}
+          className="group flex shrink-0 items-center gap-1 text-sm font-semibold text-brand hover:underline [&_svg]:size-4 [&_svg]:transition-transform [&_svg]:rtl:rotate-180"
+        >
+          {action}
+          <ArrowIcon />
+        </Link>
+      )}
+    </div>
+  );
+}
+
 async function ProductRail({
   locale,
   dict,
@@ -63,28 +88,20 @@ async function ProductRail({
 }) {
   const result = await getCategoryProducts(locale, {
     categoryId: category,
-    pageSize: 8,
+    pageSize: 10,
   }).catch(() => null);
   if (!result?.items.length) return null;
 
   return (
     <section>
-      <div className="mb-4 flex items-baseline justify-between">
-        <h2 className="text-xl font-bold">{name}</h2>
-        <Link
-          href={`/${locale}/category/${category}`}
-          className="text-sm font-medium text-brand"
-        >
-          {dict.home.viewAll}
-        </Link>
-      </div>
-      <ul className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2">
-        {result.items.slice(0, 8).map((product) => (
-          <li key={product.sku} className="w-40 shrink-0 snap-start sm:w-52">
+      <SectionHeader title={name} href={`/${locale}/category/${category}`} action={dict.home.viewAll} />
+      <Rail labels={{ previous: dict.home.previous, next: dict.home.next }}>
+        {result.items.slice(0, 10).map((product) => (
+          <li key={product.sku} className="w-44 shrink-0 snap-start sm:w-56">
             <ProductCard product={cardFromListItem(product)} locale={locale} />
           </li>
         ))}
-      </ul>
+      </Rail>
     </section>
   );
 }
@@ -93,23 +110,47 @@ function Section({
   section,
   locale,
   dict,
+  hero,
 }: {
   section: HomeSection;
   locale: Locale;
   dict: Dictionary;
+  /** The first banner group: a full-width carousel with its first image preloaded. */
+  hero: boolean;
 }) {
   switch (section.layout) {
     case "bannerImage":
+      if (hero) {
+        return (
+          <Carousel
+            labels={{
+              label: dict.home.featured,
+              previous: dict.home.previous,
+              next: dict.home.next,
+              slide: dict.home.slide,
+            }}
+          >
+            {section.items.map((item, i) => (
+              <Linked key={item.image} href={linkHref(locale, item)} className="block bg-neutral-100">
+                <Banner
+                  image={item.image}
+                  desktopImage={item.desktop_image}
+                  // Full width on every screen; all slides load up front so the track keeps one height.
+                  preload={i === 0}
+                  eager
+                />
+              </Linked>
+            ))}
+          </Carousel>
+        );
+      }
       return (
-        // The app shows groups as a carousel; side by side reads better on wide screens.
-        <section
-          className={`grid gap-3 ${section.items.length > 1 ? "md:grid-cols-2" : ""}`}
-        >
+        <section className={`grid gap-4 ${section.items.length > 1 ? "md:grid-cols-2" : ""}`}>
           {section.items.map((item) => (
             <Linked
               key={item.image}
               href={linkHref(locale, item)}
-              className="block overflow-hidden rounded-lg bg-neutral-100"
+              className="group block overflow-hidden rounded-2xl bg-neutral-100 shadow-sm transition hover:shadow-lg [&_img]:transition-transform [&_img]:duration-500 hover:[&_img]:scale-[1.03]"
             >
               <Banner image={item.image} desktopImage={item.desktop_image} />
             </Linked>
@@ -119,21 +160,19 @@ function Section({
     case "category":
       return (
         <section>
-          {section.title && (
-            <h2 className="mb-4 text-xl font-bold">{section.title}</h2>
-          )}
-          <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
+          {section.title && <SectionHeader title={section.title} />}
+          <Rail labels={{ previous: dict.home.previous, next: dict.home.next }} className="gap-3 sm:gap-4">
             {section.items.map((item) => (
-              <li key={item.image} className="w-32 shrink-0 snap-start sm:w-44">
+              <li key={item.image} className="w-36 shrink-0 snap-start sm:w-48">
                 <Linked
                   href={linkHref(locale, item)}
-                  className="block overflow-hidden rounded-lg bg-neutral-100"
+                  className="block overflow-hidden rounded-xl bg-neutral-100 ring-brand/0 transition hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-brand"
                 >
                   <Banner image={item.desktop_image ?? item.image} />
                 </Linked>
               </li>
             ))}
-          </ul>
+          </Rail>
         </section>
       );
     case "threeColumn":
@@ -151,13 +190,31 @@ function Section({
       return (
         <Link
           href={`/${locale}/category/${section.category}`}
-          className="block rounded-lg bg-brand p-4 text-center font-semibold text-white"
+          className="group relative flex flex-col items-center justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-[#0a2a5c] px-6 py-8 text-white shadow-lg sm:flex-row sm:px-10"
         >
-          {section.name} ·{" "}
-          {dict.home.endsOn.replace(
-            "{date}",
-            new Date(end).toLocaleDateString(locale === "ar" ? "ar-KW" : "en-KW"),
-          )}
+          <span aria-hidden className="absolute -end-16 -top-16 size-56 rounded-full bg-brand-accent/30 blur-2xl" />
+          <div className="relative text-center sm:text-start">
+            {section.title && (
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{section.title}</p>
+            )}
+            <p className="mt-1 text-2xl font-extrabold uppercase sm:text-3xl">{section.name}</p>
+            <p className="mt-1 text-sm text-white/80">{dict.home.endsIn}</p>
+          </div>
+          <div className="relative flex flex-col items-center gap-4 sm:flex-row">
+            <Countdown
+              end={end}
+              labels={{
+                days: dict.home.days,
+                hours: dict.home.hours,
+                minutes: dict.home.minutes,
+                seconds: dict.home.seconds,
+              }}
+            />
+            <span className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand transition group-hover:bg-brand-accent group-hover:text-white [&_svg]:size-4 [&_svg]:rtl:rotate-180">
+              {dict.home.shopNow}
+              <ArrowIcon />
+            </span>
+          </div>
         </Link>
       );
     }
@@ -177,33 +234,44 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   ]);
   const sections = home.value;
 
+  const heroIndex = sections?.findIndex((s) => s.layout === "bannerImage") ?? -1;
+
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-12 sm:gap-16">
       {home.error !== null && <BackendError dict={dict} reason={home.error} />}
 
       {sections?.map((section, i) => (
-        <Section key={i} section={section} locale={lang} dict={dict} />
+        <Section key={i} section={section} locale={lang} dict={dict} hero={i === heroIndex} />
       ))}
 
       {categories.length > 0 && (
         <section>
-          <h2 className="mb-4 text-xl font-bold">{dict.home.shopByCategory}</h2>
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <SectionHeader title={dict.home.shopByCategory} />
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
             {categories.map((category) => (
               <li key={category.id}>
                 <Link
                   href={`/${lang}/category/${category.id}`}
-                  className="flex h-full flex-col items-center gap-3 rounded-lg border border-neutral-200 p-4 text-center font-medium hover:border-brand hover:text-brand"
+                  className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 shadow-sm transition hover:shadow-lg"
                 >
-                  {category.custom_image && (
+                  {category.custom_image ? (
                     <ProductImage
                       src={productImageUrl(category.custom_image)}
                       alt=""
                       sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                      className="aspect-square w-full rounded"
+                      className="aspect-[4/5] w-full [&_img]:transition-transform [&_img]:duration-500 group-hover:[&_img]:scale-105"
                     />
+                  ) : (
+                    <div className="aspect-[4/5] w-full" />
                   )}
-                  {category.name}
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-white">
+                    <span className="text-lg font-bold uppercase leading-tight tracking-wide">{category.name}</span>
+                    <span className="flex items-center gap-1 text-xs font-semibold opacity-90 transition group-hover:gap-2 [&_svg]:size-3.5 [&_svg]:rtl:rotate-180">
+                      {dict.home.shopNow}
+                      <ArrowIcon />
+                    </span>
+                  </span>
                 </Link>
               </li>
             ))}

@@ -25,7 +25,17 @@
     "backendUnavailable": "Could not reach the Magento backend.",
     "shopNow": "Shop now",
     "viewAll": "View all",
-    "endsOn": "Ends {date}"
+    "endsOn": "Ends {date}",
+    "endsIn": "Ends in",
+    "days": "Days",
+    "hours": "Hrs",
+    "minutes": "Min",
+    "seconds": "Sec",
+    "featured": "Featured offers",
+    "slide": "Slide {n} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "explore": "Explore"
   },
   "footer": {
     "rights": "All rights reserved.",

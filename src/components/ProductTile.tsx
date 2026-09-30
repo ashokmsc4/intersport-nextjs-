@@ -19,18 +19,28 @@ export function ProductTile({
   product: ProductCardData;
   locale: Locale;
 }) {
+  const { price, final, onSale } = product.price;
+  // Sale badge from the list and sale prices (small rounding differences are ignored).
+  const off = onSale && price > 0 ? Math.round((1 - final / price) * 100) : 0;
   return (
     <HoverPrefetchLink
       href={`/${locale}/product/${encodeURIComponent(product.sku)}`}
       // Product pages are cached (ISR); prefetch on hover so the click is instant.
       className="group flex flex-col gap-2"
     >
-      <ProductImage
-        src={product.image}
-        alt={product.name}
-        sizes="(min-width: 1280px) 20vw, (min-width: 640px) 30vw, 50vw"
-        className="aspect-square rounded-lg transition-transform group-hover:[&_img]:scale-105"
-      />
+      <div className="relative">
+        <ProductImage
+          src={product.image}
+          alt={product.name}
+          sizes="(min-width: 1280px) 20vw, (min-width: 640px) 30vw, 50vw"
+          className="aspect-square rounded-lg [&_img]:transition-transform [&_img]:duration-500 group-hover:[&_img]:scale-105"
+        />
+        {off >= 5 && (
+          <span dir="ltr" className="absolute start-2 top-2 rounded bg-brand-accent px-1.5 py-0.5 text-[11px] font-bold text-white">
+            −{off}%
+          </span>
+        )}
+      </div>
       {product.brand && (
         <p className="text-xs uppercase tracking-wide text-neutral-500">
           {product.brand}

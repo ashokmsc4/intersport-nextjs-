@@ -11,15 +11,23 @@ export function Banner({
   desktopImage,
   alt = "",
   preload = false,
+  eager = false,
 }: {
   image: string;
   desktopImage?: string;
   alt?: string;
   preload?: boolean;
+  /** Load now even when off screen (carousel slides sit beside the viewport). */
+  eager?: boolean;
 }) {
   const mobileSrc = productImageUrl(image) ?? image;
   const desktopSrc = desktopImage ? (productImageUrl(desktopImage) ?? desktopImage) : null;
-  const common = { alt, sizes: "(min-width: 768px) 50vw, 100vw", preload };
+  const common = {
+    alt,
+    sizes: "(min-width: 768px) 50vw, 100vw",
+    preload,
+    ...(eager && !preload ? { loading: "eager" as const } : {}),
+  };
 
   // Intrinsic sizes are only placeholders; height:auto keeps each image's real ratio.
   const { props: { srcSet: desktop } } = getImageProps({
