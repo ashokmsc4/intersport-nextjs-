@@ -101,8 +101,9 @@ Locally the built-in optimizer is used. Override with `IMAGE_PROXY=true|false`.
 - Category and search pages depend on filters in the URL, so they render per request from cached Magento data.
 - Product cards prefetch on hover/touch (`HoverPrefetchLink`), not on scroll, so a grid doesn't render 24 pages.
 - `src/app/[lang]/loading.tsx` shows an instant skeleton while a page that isn't cached yet renders.
-- On Vercel, set the Functions region close to the Magento server and the shoppers (Dubai, `dxb1`); the
-  default (Washington, `iad1`) adds a round trip across the world to every uncached Magento call.
+- On Vercel, set the Functions region next to the Magento server: production is hosted in Ireland, so use
+  Dublin (`dub1`). The default (Washington, `iad1`) adds a transatlantic round trip to every uncached Magento
+  call. Cached pages are served from Vercel's edge nearest the shopper whatever the region.
 - Measure with `npm run build && npm start`; `npm run dev` compiles each page on first visit and is always slower.
 
 ### Session
