@@ -7,7 +7,7 @@ import { getOrder } from "@/lib/magento/customer";
 import { formatPrice } from "@/lib/format";
 import { deliveryAddress, formatDate, statusLabel, visibleItems } from "@/lib/orders";
 import { requireCustomer } from "@/lib/shopper";
-import { AccountNav } from "@/components/account/AccountNav";
+import { AccountShell } from "@/components/account/AccountShell";
 import { CartTotals } from "@/components/cart/CartTotals";
 
 export async function generateMetadata({
@@ -23,7 +23,7 @@ export default async function OrderPage({
 }: PageProps<"/[lang]/account/orders/[id]">) {
   const { lang, id } = await params;
   if (!hasLocale(lang) || !/^[\w-]+$/.test(id)) notFound();
-  const { token } = await requireCustomer(lang, `/${lang}/account/orders/${id}`);
+  const { token, customer } = await requireCustomer(lang, `/${lang}/account/orders/${id}`);
   const dict = await getDictionary(lang);
   const t = dict.orders;
   const order = await getOrder(lang, token, id);
@@ -31,18 +31,14 @@ export default async function OrderPage({
   const address = deliveryAddress(order);
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-4 text-2xl font-bold">
-        {t.order} #{order.increment_id}
-      </h1>
-      <AccountNav locale={lang} dict={dict} current="orders" />
+    <AccountShell locale={lang} dict={dict} customer={customer} current="orders" title={`${t.order} #${order.increment_id}`}>
       <p className="mb-6 text-sm text-neutral-600">
         {formatDate(order.created_at, lang)} · {statusLabel(order.status)}
       </p>
 
       <section className="mb-6">
         <h2 className="mb-2 font-semibold">{t.items}</h2>
-        <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 text-sm">
+        <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white text-sm">
           {visibleItems(order).map((item) => (
             <li key={item.item_id} className="flex justify-between gap-4 p-3">
               <span>
@@ -88,6 +84,6 @@ export default async function OrderPage({
       <Link href={`/${lang}/account/orders`} className="mt-8 inline-block text-sm text-brand underline">
         {t.back}
       </Link>
-    </div>
+    </AccountShell>
   );
 }

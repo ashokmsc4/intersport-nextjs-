@@ -57,7 +57,7 @@ export function InfiniteOrders({
 
   return (
     <>
-      <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200">
+      <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white">
         {rows.map((order) => (
           <li key={order.id}>
             <Link

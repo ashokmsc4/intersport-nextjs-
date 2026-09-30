@@ -82,3 +82,35 @@ export const TruckIcon = () => (
     <circle cx="17" cy="18" r="1.8" />
   </svg>
 );
+
+export const PackageIcon = () => (
+  <svg {...base} width={20} height={20}>
+    <path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3z" />
+    <path d="M4 7.5 12 12l8-4.5M12 12v9M8 5.3l8 4.5" />
+  </svg>
+);
+
+export const HeartIcon = () => (
+  <svg {...base} width={20} height={20}>
+    <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z" />
+  </svg>
+);
+
+export const GearIcon = () => (
+  <svg {...base} width={20} height={20}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+  </svg>
+);
+
+export const LogoutIcon = () => (
+  <svg {...base} width={20} height={20}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+  </svg>
+);
+
+export const ChevronIcon = () => (
+  <svg {...base} width={18} height={18}>
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+);

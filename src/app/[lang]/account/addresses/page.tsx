@@ -6,7 +6,7 @@ import { getAreas } from "@/lib/magento/checkout";
 import { customerMobile, getAddresses } from "@/lib/magento/customer";
 import { addressLine } from "@/lib/addresses";
 import { requireCustomer } from "@/lib/shopper";
-import { AccountNav } from "@/components/account/AccountNav";
+import { AccountShell } from "@/components/account/AccountShell";
 import { AddressForm } from "@/components/account/AddressForm";
 import { DeleteAddressButton } from "@/components/account/DeleteAddressButton";
 
@@ -32,16 +32,13 @@ export default async function AddressesPage({
   const t = dict.addresses;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-4 text-2xl font-bold">{t.title}</h1>
-      <AccountNav locale={lang} dict={dict} current="addresses" />
-
+    <AccountShell locale={lang} dict={dict} customer={customer} current="addresses" title={t.title}>
       {addresses.length === 0 ? (
         <p className="mb-8 text-neutral-600">{t.none}</p>
       ) : (
         <ul className="mb-8 grid gap-3 sm:grid-cols-2">
           {addresses.map((a) => (
-            <li key={a.address_id} className="flex flex-col gap-1 rounded-lg border border-neutral-200 p-4 text-sm">
+            <li key={a.address_id} className="flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white p-4 text-sm">
               <p className="font-semibold">
                 {a.firstname} {a.lastname}
                 {a.is_default_shipping === 1 && (
@@ -74,6 +71,6 @@ export default async function AddressesPage({
         }}
         dict={{ account: dict.account, checkout: dict.checkout, addresses: dict.addresses, errors: dict.errors }}
       />
-    </div>
+    </AccountShell>
   );
 }
