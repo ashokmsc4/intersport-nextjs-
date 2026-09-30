@@ -153,6 +153,7 @@ export async function placeOrder(
   input: {
     quoteId: string;
     address: AddressInput;
+    billing?: AddressInput;
     note: string;
     paymentMethod: string;
     gateway: string;
@@ -160,6 +161,9 @@ export async function placeOrder(
   },
 ) {
   const address = toMagentoAddress(input.address);
+  const billing = input.billing
+    ? { ...toMagentoAddress(input.billing), same_as_billing: 0 }
+    : address;
   return unwrap(
     await magentoRest<Envelope<PlacedOrder>>("V1/do-checkout", {
       locale,
@@ -171,7 +175,7 @@ export async function placeOrder(
         gateway: input.gateway,
         shipping_method: input.shippingMethod,
         customer_note: input.note,
-        billing_address: address,
+        billing_address: billing,
         shipping_address: address,
       },
     }),

@@ -103,10 +103,16 @@ export async function placeOrderAction(input: {
   paymentMethod: string;
   gateway: string;
   shippingMethod: string;
+  /** Only when it differs from the shipping address; the email is the shipping one. */
+  billing?: AddressInput;
 }): Promise<Result<{ orderId: string; paymentUrl?: string }>> {
   const locale = hasLocale(input.locale) ? input.locale : "en";
   const address = cleanAddress(input.address);
   if (typeof address === "string") return { ok: false, error: address };
+  const billing = input.billing
+    ? cleanAddress({ ...input.billing, email: address.email })
+    : address;
+  if (typeof billing === "string") return { ok: false, error: billing };
   if (!input.paymentMethod || !input.shippingMethod) {
     return { ok: false, error: "choosePayment" };
   }
@@ -117,6 +123,7 @@ export async function placeOrderAction(input: {
     const order = await placeOrder(locale, context.ref, {
       quoteId: context.quoteId,
       address,
+      billing,
       note: input.note.trim(),
       paymentMethod: input.paymentMethod,
       gateway: input.gateway,

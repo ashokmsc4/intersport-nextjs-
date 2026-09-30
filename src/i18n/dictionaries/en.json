@@ -134,7 +134,7 @@
   "checkout": {
     "title": "Checkout",
     "contact": "Contact",
-    "delivery": "Delivery address",
+    "delivery": "Shipping address",
     "governorate": "Governorate",
     "area": "Area",
     "chooseArea": "Choose an area",
@@ -147,8 +147,8 @@
     "note": "Order note (optional)",
     "continue": "Continue to payment",
     "checking": "Checking…",
-    "shippingMethod": "Delivery method",
-    "payment": "Payment",
+    "shippingMethod": "Shipping method",
+    "payment": "Choose your payment options",
     "payWith": "Pay with",
     "placeOrder": "Place order",
     "placing": "Placing order…",
@@ -157,7 +157,16 @@
     "signInFaster": "Sign in for faster checkout",
     "successTitle": "Thank you for your order",
     "successBody": "Your order number is {order}. We'll email you a confirmation.",
-    "summary": "Order summary"
+    "summary": "Order summary",
+    "billing": "Billing address",
+    "billingSame": "My billing and shipping address are the same",
+    "getItBy": "Get it by tomorrow, {date}",
+    "getItIn": "Get it in {time}",
+    "twoHours": "2 hours",
+    "collectFromStore": "Collect from the store",
+    "codNote": "Please accept Cash on Delivery orders within 3 days of delivery notice. Orders not accepted will be cancelled.",
+    "shipTo": "Ship to",
+    "choosePaymentFirst": "Choose a payment option"
   },
   "errors": {
     "required": "Please fill in all required fields.",

@@ -52,3 +52,33 @@ export const CartIcon = () => (
     <circle cx="17" cy="19.5" r="1.3" />
   </svg>
 );
+
+export const BoxIcon = () => (
+  <svg {...base} width={32} height={32}>
+    <rect x="4" y="4" width="16" height="16" rx="1" />
+    <path d="M10 4v5l2-1.2L14 9V4" />
+  </svg>
+);
+
+export const RocketIcon = () => (
+  <svg {...base} width={32} height={32}>
+    <path d="M14 4c3.5-.8 5.8.2 6 .5.3.2 1.3 2.5.5 6-.6 2.7-3.3 5.3-6.5 7l-4.5-4.5c1.7-3.2 4.3-5.9 7-6.5" />
+    <circle cx="15.5" cy="8.5" r="1.8" />
+    <path d="M9.5 13.5 6 13l2.5-3.5 3 .5M13 17.5l.5 3.5 3.5-2.5-.5-3M7 17l-3 3M8.5 18.5 6 21M5.5 15.5 3 18" />
+  </svg>
+);
+
+export const StoreIcon = () => (
+  <svg {...base} width={32} height={32}>
+    <path d="M4 9 5.5 4h13L20 9M4 9v11h16V9M4 9h16" />
+    <path d="M10 20v-6h4v6" />
+  </svg>
+);
+
+export const TruckIcon = () => (
+  <svg {...base} width={32} height={32}>
+    <path d="M3 6h11v10H3zM14 10h4l3 3v3h-7" />
+    <circle cx="7" cy="18" r="1.8" />
+    <circle cx="17" cy="18" r="1.8" />
+  </svg>
+);
