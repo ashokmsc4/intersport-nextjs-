@@ -1,11 +1,12 @@
 /**
- * Hosts whose product images go through the Next.js image optimizer.
- * Fetching on the server avoids the Magento hotlink protection (which rejects
- * image requests referred by other domains) and serves resized WebP/AVIF.
- * Shared by next.config.ts (remotePatterns) and ProductImage.
+ * Magento media hosts. Images from them load directly in the browser by default;
+ * with IMAGE_PROXY=true they go through /api/media, which only fetches these hosts.
  */
 export function imageHosts(): string[] {
-  const hosts = new Set<string>(["static.aawweb.com"]);
+  // The Magento CDNs: product images (prod.aaw.com) and banners/theme (static.aawweb.com).
+  const hosts = new Set<string>(["static.aawweb.com", "prod.aaw.com"]);
+  const media = process.env.MAGENTO_MEDIA_URL;
+  if (media) hosts.add(new URL(media).hostname);
   const base = process.env.MAGENTO_BASE_URL;
   if (base) {
     // Magento content mixes "www." and bare-domain media URLs; allow both.

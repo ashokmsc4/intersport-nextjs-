@@ -3,9 +3,8 @@ import { productImageUrl } from "@/lib/magento/client";
 import { isOptimizable } from "@/lib/media";
 
 /**
- * Home banner with separate phone and desktop artwork. Images are rewritten off
- * backend hosts and served through the optimizer (hotlink protection blocks
- * them when a browser requests them from another domain).
+ * Home banner with separate phone and desktop artwork, loaded straight from the
+ * Magento CDN without a Referer (hotlink protection rejects other sites' pages).
  */
 export function Banner({
   image,
@@ -43,7 +42,7 @@ export function Banner({
       {desktopSrc && <source media="(min-width: 768px)" srcSet={desktop} />}
       <source srcSet={mobile} />
       {/* eslint-disable-next-line jsx-a11y/alt-text -- alt is in rest */}
-      <img {...rest} style={{ width: "100%", height: "auto" }} />
+      <img {...rest} referrerPolicy="no-referrer" style={{ width: "100%", height: "auto" }} />
     </picture>
   );
 }

@@ -20,13 +20,13 @@ export async function GET(_request: Request, { params }: RouteContext<"/api/size
   if (!html) return new Response("Not found", { status: 404 });
 
   return new Response(
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${CSS}</style></head><body>${html}</body></html>`,
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${CSS}</style></head><body>${html}</body></html>`,
     {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         // Opaque origin even if opened directly; only inline styles/scripts and our image route.
         "Content-Security-Policy":
-          "sandbox allow-scripts; default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
+          "sandbox allow-scripts; default-src 'none'; img-src 'self' https:; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
         "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
       },
     },

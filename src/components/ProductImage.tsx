@@ -32,6 +32,8 @@ export function ProductImage({
           sizes={sizes}
           preload={priority}
           unoptimized={!(optimized ?? isOptimizable(src))}
+          // Magento's hotlink protection rejects image requests referred by other sites.
+          referrerPolicy="no-referrer"
           className="object-contain"
         />
       )}

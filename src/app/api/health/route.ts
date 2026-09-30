@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchMedia, mediaProblem } from "@/lib/media-fetch";
 import { backendHeaders, isWafChallenge } from "@/lib/magento/backend-headers";
+import { MEDIA_URL } from "@/lib/magento/client";
 
 export const dynamic = "force-dynamic";
 
@@ -56,8 +57,8 @@ export async function GET() {
     ? {
         settings: await probe(`${base}${settingsPath}/${store}/settings/config.json`),
         rest: await probe(`${base}/rest/${store}/V1/aaw/arealist`),
-        // One image from the Magento host and one from the banner CDN.
-        productImage: await media(`${base}/media/catalog/category/INT-CATEGORY_APP-SPORTS_copy.png`),
+        // Only used with IMAGE_PROXY=true; otherwise browsers load images from MEDIA_URL.
+        productImage: await media(`${MEDIA_URL}/media/catalog/category/INT-CATEGORY_APP-SPORTS_copy.png`),
         bannerImage: await media(
           "https://static.aawweb.com/media/weltpixel/owlcarouselslider/images/r/u/running.jpg",
         ),
@@ -77,7 +78,7 @@ export async function GET() {
     accessHeaderSet: accessHeader,
     outboundIp,
     region: process.env.VERCEL_REGION ?? null,
-    imageProxy: process.env.IMAGE_PROXY ?? (process.env.VERCEL === "1" ? "on (Vercel)" : "off"),
+    images: process.env.IMAGE_PROXY === "true" ? "proxy (/api/media)" : `direct from the browser (${MEDIA_URL})`,
     checks,
     hint: !base
       ? "Set MAGENTO_BASE_URL and redeploy."

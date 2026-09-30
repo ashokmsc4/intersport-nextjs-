@@ -177,28 +177,46 @@ export function magentoStorefront<T>(
   });
 }
 
-// Backend-only hosts that some endpoints put in image URLs (staging admin, production admin node).
-const BACKEND_MEDIA_HOSTS = (process.env.MAGENTO_BACKEND_MEDIA_HOSTS ?? "prod.aaw.com")
+// Backend-only hosts some endpoints put in image URLs (e.g. admin.uat.aawweb.com).
+const BACKEND_MEDIA_HOSTS = (process.env.MAGENTO_BACKEND_MEDIA_HOSTS ?? "")
   .split(",")
   .map((h) => h.trim())
   .filter(Boolean);
 
+const baseHost = (() => {
+  try {
+    return new URL(BASE_URL).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+})();
+
 /**
- * Absolute URL for a product image path such as `/p/h/file.jpg`.
- * Some endpoints return image URLs on a backend host (admin.* or the admin
- * node); the same /media files are served by the storefront host, so those
- * are rewritten to it.
+ * Where browsers load Magento media from. Production's own host has hotlink
+ * protection, so its /media files are served from the CDN (static.aawweb.com)
+ * unless MAGENTO_MEDIA_URL says otherwise.
+ */
+export const MEDIA_URL = (
+  process.env.MAGENTO_MEDIA_URL ||
+  (baseHost === "intersport.com.kw" ? "https://static.aawweb.com" : BASE_URL)
+).replace(/\/$/, "");
+
+/**
+ * Absolute URL for a Magento image: a catalog path such as `/p/h/file.jpg`, or a
+ * full URL. URLs on the storefront host or a backend-only host are moved to
+ * MEDIA_URL; CDN URLs (prod.aaw.com, static.aawweb.com) are kept as they are.
+ * Browsers load them directly, without a Referer (see ProductImage).
  */
 export function productImageUrl(file: string | null | undefined) {
   if (!file) return null;
   if (/^https?:\/\//.test(file)) {
     const url = new URL(file);
-    const backend =
-      url.hostname.startsWith("admin.") || BACKEND_MEDIA_HOSTS.includes(url.hostname);
-    if (BASE_URL && backend) {
-      return `${BASE_URL}${url.pathname}`;
-    }
-    return file;
+    const host = url.hostname.replace(/^www\./, "");
+    const move =
+      url.hostname.startsWith("admin.") ||
+      BACKEND_MEDIA_HOSTS.includes(url.hostname) ||
+      (host === baseHost && url.pathname.startsWith("/media/"));
+    return MEDIA_URL && move ? `${MEDIA_URL}${url.pathname}` : file;
   }
-  return `${BASE_URL}/media/catalog/product${file.startsWith("/") ? "" : "/"}${file}`;
+  return `${MEDIA_URL}/media/catalog/product${file.startsWith("/") ? "" : "/"}${file}`;
 }

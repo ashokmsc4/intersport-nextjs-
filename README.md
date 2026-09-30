@@ -84,19 +84,21 @@ MAGENTO_USER_AGENT=...   # see below
   Every Magento request (REST, settings, media, widgets) sends it. `/api/health` reports `blockedBy` when
   the bot check is still served, and the server's outbound IP for the firewall logs.
 - Settings files (`data/categories.json` etc.) have no version folder on production either.
-- Media URLs on `prod.aaw.com` (admin node) and `admin.*` hosts are rewritten to `MAGENTO_BASE_URL`.
-- Magento's `/media` has hotlink protection: images requested by a browser from another domain get 403. Product
-  images and banners therefore go through the Next.js image optimizer (`src/lib/media.ts`,
-  `ProductImage`, `Banner`), which fetches them server-side and serves resized AVIF/WebP from this domain.
+- Magento's `/media` has hotlink protection: image requests referred by another domain get 403. Images are
+  loaded directly from the CDN without a Referer (see Images below).
 - Sign-up, cart and checkout on production create real accounts, carts and orders.
 
-### Images on Vercel
+### Images
 
-Vercel's image service can't fetch Magento media (firewall and image quota), and browsers can't load it
-directly from another domain (hotlink protection returns 403). So on Vercel (`VERCEL=1` at build time) images
-use a custom loader (`src/lib/image-loader.ts`) that points at `/api/media`, a pass-through route that only
-fetches https URLs under `/media/` on the configured image hosts and lets the CDN cache them for a month.
-Locally the built-in optimizer is used. Override with `IMAGE_PROXY=true|false`.
+Browsers load Magento images directly from the CDNs; neither Vercel nor the Next.js optimizer fetches them:
+
+- URLs on `prod.aaw.com` and `static.aawweb.com` are used as the API returns them.
+- Catalog paths, `admin.*` / `MAGENTO_BACKEND_MEDIA_HOSTS` URLs and `/media` URLs on the storefront host are
+  moved to `MAGENTO_MEDIA_URL` (default `https://static.aawweb.com` for production, the base URL otherwise).
+- Magento's hotlink protection rejects image requests whose Referer is another site, so images are requested
+  with `referrerPolicy="no-referrer"` (`ProductImage`, `Banner`, the size guide).
+- `IMAGE_PROXY=true` switches back to serving images through `/api/media` (a pass-through limited to the media
+  hosts), e.g. if the CDN ever blocks direct requests.
 
 ### Performance
 

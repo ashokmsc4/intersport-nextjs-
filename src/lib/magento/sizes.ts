@@ -63,10 +63,10 @@ export async function getSizeGuideHtml(productId: string): Promise<string | null
     output
       // The popup script needs the website's jQuery/RequireJS; the page shows the guide itself.
       .replace(/<script[^>]*>\s*require\([\s\S]*?<\/script>/g, "")
-      // Images go through the media pass-through (hotlink protection; backend hosts rewritten).
+      // Images load from the media CDN (backend hosts rewritten).
       .replace(/(<img[^>]+src=")(https?:\/\/[^"]+)"/g, (_, head: string, src: string) => {
-        const url = productImageUrl(src.replace(/&amp;/g, "&"));
-        return `${head}/api/media?url=${encodeURIComponent(url ?? src)}"`;
+        const url = productImageUrl(src.replace(/&amp;/g, "&")) ?? src;
+        return `${head}${url.replace(/&/g, "&amp;")}"`;
       })
   );
 }
