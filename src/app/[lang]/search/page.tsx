@@ -75,7 +75,7 @@ export default async function SearchPage({
             clearHref={`/${lang}/search?q=${encodeURIComponent(q)}`}
             dict={dict}
           />
-          <div>
+          <div className="listing-results">
             {result === null ? (
               <BackendError dict={dict} reason={failure ?? ""} />
             ) : result.items.length === 0 ? (

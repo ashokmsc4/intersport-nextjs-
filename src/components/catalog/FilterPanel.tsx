@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useTransition } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { FilterGroup, PriceRange } from "@/lib/magento/catalog";
@@ -11,7 +13,8 @@ export const FILTER_FORM_ID = "listing-filters";
 
 /**
  * Plain GET form so filtered URLs are shareable and work without JavaScript;
- * with JavaScript every change submits immediately.
+ * with JavaScript every change navigates in place (the panel stays put while
+ * the results reload).
  */
 export function FilterPanel({
   groups,
@@ -38,6 +41,19 @@ export function FilterPanel({
   const priceActive = price?.selected.min !== undefined || price?.selected.max !== undefined;
   const active = Object.values(selected).flat().length + (priceActive ? 1 : 0);
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
+  const navigate = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // FormData fires the formdata event below, so blank price bounds are pruned here too.
+    const params = new URLSearchParams(
+      [...new FormData(e.currentTarget)].map(([k, v]) => [k, String(v)]),
+    );
+    const qs = params.toString();
+    startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
+  };
+
   // Leave unset price bounds out of the URL instead of sending `price_min=`.
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
@@ -52,7 +68,14 @@ export function FilterPanel({
   }, []);
 
   return (
-    <form ref={form} id={FILTER_FORM_ID} method="get" className="flex flex-col gap-4">
+    <form
+      ref={form}
+      id={FILTER_FORM_ID}
+      method="get"
+      onSubmit={navigate}
+      aria-busy={pending || undefined}
+      className="flex flex-col gap-4 transition-opacity aria-busy:opacity-70"
+    >
       {query !== undefined && <input type="hidden" name="q" value={query} />}
       {(groups.length > 0 || price) && (
         <div className="flex flex-col gap-3">
@@ -117,9 +140,9 @@ export function FilterPanel({
         </button>
       </noscript>
       {active > 0 && (
-        <a href={clearHref} className="text-sm text-brand underline">
+        <Link href={clearHref} scroll={false} className="text-sm text-brand underline">
           {t.clear}
-        </a>
+        </Link>
       )}
     </form>
   );

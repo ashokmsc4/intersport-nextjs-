@@ -139,7 +139,7 @@ export default async function CategoryPage({
             dict={dict}
           />
         </aside>
-        <div>
+        <div className="listing-results">
           {result === null ? (
             <BackendError dict={dict} reason={failure ?? ""} />
           ) : result.items.length === 0 ? (

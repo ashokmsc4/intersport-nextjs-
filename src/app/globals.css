@@ -55,3 +55,12 @@ nav[data-closed] .mega-panel {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+/* Results fade while a filter or sort change loads (the panel sets aria-busy). */
+.listing-results {
+  transition: opacity 150ms;
+}
+body:has(#listing-filters[aria-busy="true"]) .listing-results {
+  opacity: 0.5;
+  pointer-events: none;
+}
