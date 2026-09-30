@@ -82,6 +82,14 @@ MAGENTO_USER_AGENT=...   # see below
   `ProductImage`, `Banner`), which fetches them server-side and serves resized AVIF/WebP from this domain.
 - Sign-up, cart and checkout on production create real accounts, carts and orders.
 
+### Images on Vercel
+
+Vercel's image service can't fetch Magento media (firewall and image quota), and browsers can't load it
+directly from another domain (hotlink protection returns 403). So on Vercel (`VERCEL=1` at build time) images
+use a custom loader (`src/lib/image-loader.ts`) that points at `/api/media`, a pass-through route that only
+fetches https URLs under `/media/` on the configured image hosts and lets the CDN cache them for a month.
+Locally the built-in optimizer is used. Override with `IMAGE_PROXY=true|false`.
+
 ### Performance
 
 - `src/app/[lang]/loading.tsx` shows an instant skeleton and stops link prefetching at that boundary.
