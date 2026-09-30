@@ -130,6 +130,39 @@ Browsers load Magento images directly from the CDNs; neither Vercel nor the Next
   call. Cached pages are served from Vercel's edge nearest the shopper whatever the region.
 - Measure with `npm run build && npm start`; `npm run dev` compiles each page on first visit and is always slower.
 
+### Deploying to Cloudflare Workers
+
+The app runs on Workers through [OpenNext](https://opennext.js.org/cloudflare) (`@opennextjs/cloudflare`,
+configured in `open-next.config.ts` and `wrangler.jsonc`). Tested on the Workers runtime (`wrangler dev`)
+against staging: catalog, search, product pages, add to cart, Click & Collect, sign-in, cart and checkout.
+
+- **Plan:** Workers Paid. The free plan allows 10 ms of CPU per request, which server-rendering exceeds;
+  Paid allows 30 s (time spent waiting on Magento doesn't count). The bundle is ~2.5 MB compressed.
+- **Caching:** cached pages (ISR) and Magento responses are stored in R2 with a per-region in-memory
+  layer; background refreshes go through a Durable Object queue.
+- **Placement:** Smart Placement runs the Worker near Magento (Ireland), since pages make several
+  Magento calls in a row.
+- **Settings:** non-secret ones are `vars` in `wrangler.jsonc`; secrets (`MAGENTO_ACCESS_HEADER_VALUE`,
+  `MAGENTO_INTEGRATION_TOKEN`) via `npx wrangler secret put <NAME>`. The build also reads
+  `MAGENTO_BASE_URL` (the home page is prerendered), so set it in `.env.production` or the build
+  environment too.
+- **Firewall:** requests come from Cloudflare's network. If Magento's firewall blocks them (as it does
+  Vercel's), use the access header (`MAGENTO_ACCESS_HEADER_NAME` / `_VALUE`) and check `/api/health`.
+- `proxy.ts` (the `/` → `/en` redirect) runs as Node.js middleware, which OpenNext marks experimental on
+  Cloudflare; it worked in testing.
+
+First deploy:
+
+```bash
+npx wrangler login
+npx wrangler r2 bucket create intersport-nextjs-cache
+npx wrangler secret put MAGENTO_ACCESS_HEADER_VALUE   # when the hosting team provides it
+npm run cf:deploy                                     # build + deploy
+```
+
+`npm run cf:preview` builds and runs the Worker locally (`wrangler dev`); put local secrets in `.dev.vars`
+(see `.dev.vars.example`). Add a custom domain under the Worker's Settings → Domains & Routes.
+
 ### Session
 
 Tokens live in httpOnly cookies (`src/lib/session.ts`): the customer token after sign-in, the masked guest

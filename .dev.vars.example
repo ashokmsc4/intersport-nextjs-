@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `npm run cf:preview` (local Workers runtime). Not committed.
+# Secrets for the deployed Worker go in with: npx wrangler secret put <NAME>
+MAGENTO_ACCESS_HEADER_NAME=
+MAGENTO_ACCESS_HEADER_VALUE=

@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "intersport-nextjs",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Run the Worker close to the backend it calls most (Magento, in Ireland): pages make
+  // several Magento calls in a row, so this cuts more time than running near the shopper.
+  "placement": { "mode": "smart" },
+  "services": [
+    // Self-reference, used by OpenNext for revalidation. Must match "name".
+    { "binding": "WORKER_SELF_REFERENCE", "service": "intersport-nextjs" }
+  ],
+  "r2_buckets": [
+    // Create once: npx wrangler r2 bucket create intersport-nextjs-cache
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "intersport-nextjs-cache" }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler"] }],
+  // Non-secret settings. Secrets (MAGENTO_ACCESS_HEADER_VALUE, MAGENTO_INTEGRATION_TOKEN):
+  //   npx wrangler secret put <NAME>
+  "vars": {
+    "MAGENTO_BASE_URL": "https://www.intersport.com.kw",
+    "MAGENTO_USER_AGENT": "Dart/2.10 (dart:io)",
+    "MAGENTO_STORE_CODE_EN": "intersport_en",
+    "MAGENTO_STORE_CODE_AR": "intersport_ar",
+    "MAGENTO_REVALIDATE_SECONDS": "300"
+  },
+  "observability": { "enabled": true }
+}
