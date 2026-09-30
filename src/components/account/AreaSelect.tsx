@@ -1,9 +1,8 @@
 "use client";
 
-export type Governorate = {
-  governorate: string;
-  areas: { area: string; area_name: string }[];
-};
+import type { Governorate } from "@/lib/areas";
+
+export type { Governorate };
 
 export type AreaValue = { governorate: string; areaId: string; areaName: string };
 

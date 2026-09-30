@@ -15,6 +15,7 @@ import { formatPrice } from "@/lib/format";
 import { CartTotals } from "@/components/cart/CartTotals";
 import { Field, FormError, buttonClass } from "@/components/forms/Field";
 import { AreaSelect, type Governorate } from "@/components/account/AreaSelect";
+import { resolveArea } from "@/lib/areas";
 
 /** A saved address already mapped to checkout fields, with a display label. */
 export type SavedChoice = { id: string; label: string; address: Partial<AddressInput> };
@@ -258,7 +259,18 @@ export function CheckoutForm({
               defaultValue=""
               onChange={(e) => {
                 const choice = saved.find((c) => c.id === e.target.value);
-                setAddress((a) => ({ ...a, ...emptyDelivery, ...choice?.address }));
+                const area = choice ? resolveArea(governorates, choice.address) : null;
+                setAddress((a) => ({
+                  ...a,
+                  ...emptyDelivery,
+                  ...choice?.address,
+                  // Saved names may not match the delivery list exactly; use the resolved area,
+                  // or keep only a valid governorate so the shopper picks the area.
+                  ...(area ??
+                    (governorates.some((g) => g.governorate === choice?.address.governorate)
+                      ? { areaId: "", areaName: "" }
+                      : { governorate: "", areaId: "", areaName: "" })),
+                }));
               }}
               className="rounded border border-neutral-300 px-3 py-2 text-base"
             >
