@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
-import type { FilterGroup } from "@/lib/magento/catalog";
+import type { FilterGroup, PriceRange } from "@/lib/magento/catalog";
+import { PriceFilter } from "./PriceFilter";
 
 /** Id of the filter form; SortSelect joins it through the `form` attribute. */
 export const FILTER_FORM_ID = "listing-filters";
@@ -13,12 +16,17 @@ export const FILTER_FORM_ID = "listing-filters";
 export function FilterPanel({
   groups,
   selected,
+  price,
+  locale,
   query,
   clearHref,
   dict,
 }: {
   groups: FilterGroup[];
   selected: Record<string, string[]>;
+  /** Price slider stops and the chosen bounds; omitted when the listing has no price spread. */
+  price?: { steps: number[]; selected: PriceRange };
+  locale: Locale;
   /** Search term to keep when filtering search results. */
   query?: string;
   clearHref: string;
@@ -27,17 +35,48 @@ export function FilterPanel({
   const t = dict.filters;
   const submit = (e: React.ChangeEvent<HTMLInputElement>) =>
     e.currentTarget.form?.requestSubmit();
-  const active = Object.values(selected).flat().length;
+  const priceActive = price?.selected.min !== undefined || price?.selected.max !== undefined;
+  const active = Object.values(selected).flat().length + (priceActive ? 1 : 0);
+
+  // Leave unset price bounds out of the URL instead of sending `price_min=`.
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const el = form.current;
+    const prune = (e: FormDataEvent) => {
+      for (const key of ["price_min", "price_max"]) {
+        if (e.formData.get(key) === "") e.formData.delete(key);
+      }
+    };
+    el?.addEventListener("formdata", prune);
+    return () => el?.removeEventListener("formdata", prune);
+  }, []);
 
   return (
-    <form id={FILTER_FORM_ID} method="get" className="flex flex-col gap-4">
+    <form ref={form} id={FILTER_FORM_ID} method="get" className="flex flex-col gap-4">
       {query !== undefined && <input type="hidden" name="q" value={query} />}
-      {groups.length > 0 && (
+      {(groups.length > 0 || price) && (
         <div className="flex flex-col gap-3">
           <p className="font-semibold">
             {t.title}
             {active > 0 && ` (${active})`}
           </p>
+          {price && (
+            <details open className="border-b border-neutral-200 pb-3">
+              <summary className="cursor-pointer text-sm font-semibold">
+                {t.price}
+                {priceActive && " (1)"}
+              </summary>
+              <PriceFilter
+                // Fresh slider state per listing and per applied range.
+                key={`${price.steps.join(",")}|${price.selected.min}|${price.selected.max}`}
+                steps={price.steps}
+                min={price.selected.min}
+                max={price.selected.max}
+                locale={locale}
+                dict={dict}
+              />
+            </details>
+          )}
           {groups.map((group) => {
             const chosen = selected[group.attribute_code] ?? [];
             return (

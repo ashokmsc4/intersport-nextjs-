@@ -1,13 +1,13 @@
 "use server";
 
 import { hasLocale } from "@/i18n/config";
-import { getCategoryProducts, parseSort, searchProducts } from "@/lib/magento/catalog";
+import { getCategoryProducts, parseSort, searchProducts, type PriceRange } from "@/lib/magento/catalog";
 import { describeError } from "@/lib/magento/diagnose";
 import { cardFromListItem, type ProductCardData } from "@/components/ProductCard";
 
 /** Which listing to continue: a category (with its filters) or a search. */
 export type ListingSource =
-  | { type: "category"; categoryId: number; filters: Record<string, string[]> }
+  | { type: "category"; categoryId: number; filters: Record<string, string[]>; price: PriceRange }
   | { type: "search"; q: string };
 
 export type ListingPage =
@@ -42,7 +42,12 @@ export async function loadListingPage(input: {
           .map(([code, values]) => [code, (Array.isArray(values) ? values : []).filter((v) => /^\d{1,10}$/.test(String(v))).slice(0, 50)])
           .filter(([, values]) => values.length > 0),
       ) as Record<string, string[]>;
-      const result = await getCategoryProducts(locale, { categoryId, filters, sort, page, pageSize });
+      const bound = (v: unknown) => {
+        const n = Number(v);
+        return v != null && Number.isFinite(n) && n >= 0 ? n : undefined;
+      };
+      const price = { min: bound(source.price?.min), max: bound(source.price?.max) };
+      const result = await getCategoryProducts(locale, { categoryId, filters, price, sort, page, pageSize });
       return { ok: true, products: result.items.map(cardFromListItem), total: result.total_count };
     }
     const q = String(source.q ?? "").trim().slice(0, 100);

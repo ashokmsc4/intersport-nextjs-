@@ -8,8 +8,11 @@ import {
   getCategoryPath,
   getCategoryProducts,
   getFilters,
+  getPriceBounds,
   parseSort,
+  priceSteps,
   selectedFilters,
+  selectedPrice,
   visibleChildren,
 } from "@/lib/magento/catalog";
 import { BackendError } from "@/components/BackendError";
@@ -49,19 +52,22 @@ export default async function CategoryPage({
     return <BackendError dict={await getDictionary(locale)} reason={error} />;
   }
   const query = await searchParams;
-  const [dict, groups, trail] = await Promise.all([
+  const [dict, groups, bounds, trail] = await Promise.all([
     getDictionary(locale),
     getFilters(locale, category.id).catch(() => []),
+    getPriceBounds(locale, category.id).catch(() => null),
     getCategoryPath(locale, category.id).catch(() => []),
   ]);
 
   const page = Math.max(1, Number(query.page) || 1);
   const sort = parseSort(query.sort);
   const filters = selectedFilters(query, groups);
+  const price = selectedPrice(query);
   const { value: result, error: failure } = await settle(
     getCategoryProducts(locale, {
       categoryId: category.id,
       filters,
+      price,
       sort,
       page,
       pageSize: PAGE_SIZE,
@@ -103,6 +109,8 @@ export default async function CategoryPage({
           <FilterPanel
             groups={groups}
             selected={filters}
+            price={bounds ? { steps: priceSteps(bounds), selected: price } : undefined}
+            locale={locale}
             clearHref={`/${locale}/category/${category.id}`}
             dict={dict}
           />
@@ -121,7 +129,7 @@ export default async function CategoryPage({
               pageSize={PAGE_SIZE}
               params={query}
               path={`/${locale}/category/${category.id}`}
-              source={{ type: "category", categoryId: category.id, filters }}
+              source={{ type: "category", categoryId: category.id, filters, price }}
               sort={sort}
               toolbar={<SortSelect sort={sort} dict={dict} />}
             />

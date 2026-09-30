@@ -245,7 +245,13 @@
     "priceHigh": "السعر: من الأعلى للأقل",
     "apply": "تطبيق",
     "clear": "مسح الكل",
-    "showFilters": "التصفية"
+    "showFilters": "التصفية",
+    "price": "السعر",
+    "min": "الأدنى",
+    "max": "الأعلى",
+    "to": "إلى",
+    "minPrice": "أدنى سعر",
+    "maxPrice": "أعلى سعر"
   },
   "delivery": {
     "title": "خيار التوصيل",

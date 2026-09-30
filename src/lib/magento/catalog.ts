@@ -50,12 +50,16 @@ const SORTS: Record<SortKey, [field: string, direction: "ASC" | "DESC"]> = {
   price_desc: ["price", "DESC"],
 };
 
+export type PriceRange = { min?: number; max?: number };
+
 export type ProductListParams = {
   categoryId?: number;
   /** Free-text search on name or SKU. */
   search?: string;
   /** Attribute code -> selected option ids, e.g. { vendor_name: ["2553"] }. */
   filters?: Record<string, string[]>;
+  /** Inclusive price bounds on the `price` attribute. */
+  price?: PriceRange;
   sort?: SortKey;
   page?: number;
   pageSize?: number;
@@ -71,6 +75,7 @@ export function listProducts(
     categoryId,
     search,
     filters = {},
+    price = {},
     ids,
     sort = "recommended",
     page = 1,
@@ -105,6 +110,8 @@ export function listProducts(
   for (const [code, values] of Object.entries(filters)) {
     if (values.length) add([{ field: code, value: values.join(","), type: "in" }]);
   }
+  if (price.min !== undefined) add([{ field: "price", value: String(price.min), type: "gteq" }]);
+  if (price.max !== undefined) add([{ field: "price", value: String(price.max), type: "lteq" }]);
 
   const [field, direction] = SORTS[sort];
   // Search has no merchandised position, so "recommended" keeps the API default there.
@@ -206,6 +213,49 @@ export function selectedFilters(
     if (values.length) selected[g.attribute_code] = values;
   }
   return selected;
+}
+
+/**
+ * Cheapest and dearest price in a category, for the price slider. Two one-item
+ * price-sorted queries (the list endpoint has no aggregations); price 0 is ignored.
+ */
+export async function getPriceBounds(locale: Locale, categoryId: number) {
+  const [low, high] = await Promise.all(
+    (["price_asc", "price_desc"] as const).map((sort) =>
+      listProducts(locale, { categoryId, price: { min: 0.001 }, sort, pageSize: 1 }),
+    ),
+  );
+  const min = Number(low.items[0]?.price);
+  const max = Number(high.items[0]?.price);
+  return min > 0 && max > min ? { min, max } : null;
+}
+
+/** Round slider stops (1, 2 or 5 × 10ⁿ apart, about ten of them) covering the bounds. */
+export function priceSteps({ min, max }: { min: number; max: number }) {
+  const rough = (max - min) / 10;
+  const magnitude = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) ?? rough;
+  const start = Math.floor(min / step) * step;
+  const steps: number[] = [];
+  for (let i = 0; steps.length === 0 || steps[steps.length - 1] < max; i++) {
+    steps.push(Number((start + i * step).toFixed(3)));
+  }
+  return steps;
+}
+
+/** Reads `?price_min=&price_max=`, dropping blanks, negatives and an inverted range. */
+export function selectedPrice(
+  searchParams: Record<string, string | string[] | undefined>,
+): PriceRange {
+  const read = (key: string) => {
+    const raw = searchParams[key];
+    const n = Number(Array.isArray(raw) ? raw[0] : raw);
+    return raw !== undefined && raw !== "" && Number.isFinite(n) && n >= 0 ? n : undefined;
+  };
+  const min = read("price_min");
+  const max = read("price_max");
+  if (min !== undefined && max !== undefined && min > max) return {};
+  return { min, max };
 }
 
 export const parseSort = (value: unknown): SortKey =>

@@ -245,7 +245,13 @@
     "priceHigh": "Price: high to low",
     "apply": "Apply",
     "clear": "Clear all",
-    "showFilters": "Filters"
+    "showFilters": "Filters",
+    "price": "Price",
+    "min": "Min",
+    "max": "Max",
+    "to": "to",
+    "minPrice": "Minimum price",
+    "maxPrice": "Maximum price"
   },
   "delivery": {
     "title": "Delivery option",

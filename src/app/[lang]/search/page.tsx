@@ -67,6 +67,7 @@ export default async function SearchPage({
           <FilterPanel
             groups={[]}
             selected={{}}
+            locale={lang}
             query={q}
             clearHref={`/${lang}/search?q=${encodeURIComponent(q)}`}
             dict={dict}
