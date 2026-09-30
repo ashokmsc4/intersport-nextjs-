@@ -78,8 +78,7 @@ export function PriceFilter({
           type="number"
           name="price_min"
           inputMode="decimal"
-          min={floor}
-          max={ceil}
+          min={0}
           step="any"
           value={lo}
           placeholder={t.min}
@@ -94,8 +93,7 @@ export function PriceFilter({
           type="number"
           name="price_max"
           inputMode="decimal"
-          min={floor}
-          max={ceil}
+          min={0}
           step="any"
           value={hi}
           placeholder={t.max}

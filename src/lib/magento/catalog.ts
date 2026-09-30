@@ -58,7 +58,10 @@ export type ProductListParams = {
   search?: string;
   /** Attribute code -> selected option ids, e.g. { vendor_name: ["2553"] }. */
   filters?: Record<string, string[]>;
-  /** Inclusive price bounds on the `price` attribute. */
+  /**
+   * Inclusive bounds on the price shown to shoppers. Applied by getCategoryProducts
+   * (the list endpoint ignores price conditions).
+   */
   price?: PriceRange;
   sort?: SortKey;
   page?: number;
@@ -75,7 +78,6 @@ export function listProducts(
     categoryId,
     search,
     filters = {},
-    price = {},
     ids,
     sort = "recommended",
     page = 1,
@@ -110,8 +112,6 @@ export function listProducts(
   for (const [code, values] of Object.entries(filters)) {
     if (values.length) add([{ field: code, value: values.join(","), type: "in" }]);
   }
-  if (price.min !== undefined) add([{ field: "price", value: String(price.min), type: "gteq" }]);
-  if (price.max !== undefined) add([{ field: "price", value: String(price.max), type: "lteq" }]);
 
   const [field, direction] = SORTS[sort];
   // Search has no merchandised position, so "recommended" keeps the API default there.
@@ -166,12 +166,43 @@ export async function searchProducts(
   return { items, total_count: hits.total_count };
 }
 
-/** Catalog-visible products in a category, in merchandised (position) order. */
-export function getCategoryProducts(
+// A price range is applied here: batches of the category are loaded and filtered.
+const PRICE_BATCH = 200;
+const PRICE_SCAN_LIMIT = 2000;
+
+/**
+ * Catalog-visible products in a category, in merchandised (position) order.
+ * With a price range, the category's products (up to PRICE_SCAN_LIMIT) are
+ * loaded in batches, kept when their shown price is in range, and paged here.
+ */
+export async function getCategoryProducts(
   locale: Locale,
   params: Omit<ProductListParams, "categoryId"> & { categoryId: number },
-) {
-  return listProducts(locale, params);
+): Promise<SearchResult<Product>> {
+  const { price, page = 1, pageSize = 24, ...rest } = params;
+  if (price?.min === undefined && price?.max === undefined) {
+    return listProducts(locale, { ...rest, page, pageSize });
+  }
+  const batch = (n: number) => listProducts(locale, { ...rest, page: n, pageSize: PRICE_BATCH });
+  const first = await batch(1);
+  const pages = Math.min(
+    Math.ceil(first.total_count / PRICE_BATCH),
+    PRICE_SCAN_LIMIT / PRICE_BATCH,
+  );
+  const more = await Promise.all(Array.from({ length: Math.max(0, pages - 1) }, (_, i) => batch(i + 2)));
+  const inRange = (p: Product) => {
+    const shown = listedPrice(p);
+    return (
+      shown > 0 &&
+      (price.min === undefined || shown >= price.min) &&
+      (price.max === undefined || shown <= price.max)
+    );
+  };
+  const matched = [first, ...more].flatMap((r) => r.items).filter(inRange);
+  return {
+    items: matched.slice((page - 1) * pageSize, page * pageSize),
+    total_count: matched.length,
+  };
 }
 
 export type FilterGroup = {
@@ -227,23 +258,17 @@ function listedPrice(product: Product) {
 }
 
 /**
- * Cheapest and dearest price in a category, for the price slider. Two one-item
- * price-sorted queries (the list endpoint has no aggregations); price 0 is ignored.
- * Categories of only configurables (price 0 on the parent) fall back to the shown
- * prices of the first products listed.
+ * Cheapest and dearest shown price in a category, for the price slider: the first
+ * page of each price sort plus the merchandised first page (configurables list with
+ * price 0, so the sorts alone can miss them; the list endpoint has no aggregations).
  */
 export async function getPriceBounds(locale: Locale, categoryId: number) {
-  const [low, high] = await Promise.all(
-    (["price_asc", "price_desc"] as const).map((sort) =>
-      listProducts(locale, { categoryId, price: { min: 0.001 }, sort, pageSize: 1 }),
+  const pages = await Promise.all(
+    (["price_asc", "price_desc", "recommended"] as const).map((sort) =>
+      listProducts(locale, { categoryId, sort, pageSize: 48 }),
     ),
   );
-  const min = Number(low.items[0]?.price);
-  const max = Number(high.items[0]?.price);
-  if (min > 0 && max > min) return { min, max };
-
-  const sample = await listProducts(locale, { categoryId, pageSize: 48 });
-  const prices = sample.items.map(listedPrice).filter((p) => p > 0);
+  const prices = pages.flatMap((r) => r.items).map(listedPrice).filter((p) => p > 0);
   if (!prices.length) return null;
   return { min: Math.min(...prices), max: Math.max(...prices) };
 }
