@@ -215,9 +215,22 @@ export function selectedFilters(
   return selected;
 }
 
+/** Price a listed product shows (configurables list with price 0; minimal_price is the real one). */
+function listedPrice(product: Product) {
+  const a = product.custom_attributes;
+  return effectivePrice({
+    price: product.price || Number(attr(a, "minimal_price") ?? 0),
+    special_price: attr(a, "special_price"),
+    special_from_date: attr(a, "special_from_date"),
+    special_to_date: attr(a, "special_to_date"),
+  }).final;
+}
+
 /**
  * Cheapest and dearest price in a category, for the price slider. Two one-item
  * price-sorted queries (the list endpoint has no aggregations); price 0 is ignored.
+ * Categories of only configurables (price 0 on the parent) fall back to the shown
+ * prices of the first products listed.
  */
 export async function getPriceBounds(locale: Locale, categoryId: number) {
   const [low, high] = await Promise.all(
@@ -227,20 +240,19 @@ export async function getPriceBounds(locale: Locale, categoryId: number) {
   );
   const min = Number(low.items[0]?.price);
   const max = Number(high.items[0]?.price);
-  return min > 0 && max > min ? { min, max } : null;
+  if (min > 0 && max > min) return { min, max };
+
+  const sample = await listProducts(locale, { categoryId, pageSize: 48 });
+  const prices = sample.items.map(listedPrice).filter((p) => p > 0);
+  if (!prices.length) return null;
+  return { min: Math.min(...prices), max: Math.max(...prices) };
 }
 
-/** Round slider stops (1, 2 or 5 × 10ⁿ apart, about ten of them) covering the bounds. */
-export function priceSteps({ min, max }: { min: number; max: number }) {
-  const rough = (max - min) / 10;
-  const magnitude = 10 ** Math.floor(Math.log10(rough));
-  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= rough) ?? rough;
-  const start = Math.floor(min / step) * step;
-  const steps: number[] = [];
-  for (let i = 0; steps.length === 0 || steps[steps.length - 1] < max; i++) {
-    steps.push(Number((start + i * step).toFixed(3)));
-  }
-  return steps;
+/** Slider range around the bounds: whole KWD ends and a step that suits the spread. */
+export function sliderRange({ min, max }: { min: number; max: number }) {
+  const lo = Math.floor(min);
+  const hi = Math.max(Math.ceil(max), lo + 1);
+  return { min: lo, max: hi, step: hi - lo <= 10 ? 0.5 : 1 };
 }
 
 /** Reads `?price_min=&price_max=`, dropping blanks, negatives and an inverted range. */

@@ -274,7 +274,8 @@
     "max": "Max",
     "to": "to",
     "minPrice": "Minimum price",
-    "maxPrice": "Maximum price"
+    "maxPrice": "Maximum price",
+    "priceRange": "Price range"
   },
   "delivery": {
     "title": "Delivery option",

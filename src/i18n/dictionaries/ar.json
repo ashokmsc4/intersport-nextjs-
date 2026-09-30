@@ -274,7 +274,8 @@
     "max": "الأعلى",
     "to": "إلى",
     "minPrice": "أدنى سعر",
-    "maxPrice": "أعلى سعر"
+    "maxPrice": "أعلى سعر",
+    "priceRange": "نطاق السعر"
   },
   "delivery": {
     "title": "خيار التوصيل",

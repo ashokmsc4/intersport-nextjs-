@@ -1,125 +1,119 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { formatPrice } from "@/lib/format";
 
-const SLIDE_SUBMIT_DELAY = 500;
-
 /**
- * Price slider plus Min/Max selects over the same stops. The selects carry the
- * form values (price_min / price_max), so the filter works without JavaScript;
- * the ends of the range mean "no bound" and are left out of the URL.
+ * Price range: a two-thumb slider and Min / Max number boxes kept in step, applied
+ * with the Apply button (or Enter). The boxes carry the form values (price_min /
+ * price_max), so the filter works without JavaScript; a bound left at the end of
+ * the range is sent blank and dropped from the URL.
  */
 export function PriceFilter({
-  steps: baseSteps,
+  floor,
+  ceil,
+  step,
   min,
   max,
   locale,
   dict,
 }: {
-  steps: number[];
+  /** Slider range for the listing. */
+  floor: number;
+  ceil: number;
+  step: number;
+  /** Bounds applied from the URL. */
   min?: number;
   max?: number;
   locale: Locale;
   dict: Pick<Dictionary, "filters">;
 }) {
   const t = dict.filters;
-  // A bound from the URL that isn't a stop still gets its own stop.
-  const steps = [...new Set([...baseSteps, min, max].filter((v) => v !== undefined))].sort(
-    (a, b) => a - b,
-  );
-  const last = steps.length - 1;
-  const [lo, setLo] = useState(min === undefined ? 0 : steps.indexOf(min));
-  const [hi, setHi] = useState(max === undefined ? last : steps.indexOf(max));
-  const root = useRef<HTMLDivElement>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  // Text so a box can be emptied (no bound) or typed through partial values.
+  const [lo, setLo] = useState(min === undefined ? "" : String(min));
+  const [hi, setHi] = useState(max === undefined ? "" : String(max));
+  const clamp = (v: number) => Math.min(ceil, Math.max(floor, v));
+  const loValue = lo === "" ? floor : clamp(Number(lo) || floor);
+  const hiValue = hi === "" ? ceil : clamp(Number(hi) || ceil);
+  const pct = (v: number) => `${((v - floor) / (ceil - floor)) * 100}%`;
+  // Thumbs at the ends mean "no bound".
+  const fromSlider = (v: number, end: number) => (v === end ? "" : String(v));
 
-  // Submit after state has rendered into the selects.
-  const submitSoon = (delay: number) => {
-    clearTimeout(timer.current);
-    timer.current = setTimeout(
-      () => root.current?.closest("form")?.requestSubmit(),
-      delay,
-    );
-  };
-  const minValue = lo === 0 ? "" : String(steps[lo]);
-  const maxValue = hi === last ? "" : String(steps[hi]);
-  const label = (v: number) => formatPrice(v, locale, { trim: true });
-  const pct = (i: number) => `${(i / last) * 100}%`;
+  const box =
+    "w-full min-w-0 rounded-md border border-neutral-200 bg-neutral-100 px-3 py-2.5 text-sm placeholder:text-neutral-400 focus:border-brand focus:bg-white focus:outline-none";
 
   return (
-    <div ref={root} className="flex flex-col gap-4 pt-3">
-      <div className="price-range relative h-[18px]">
-        <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded bg-neutral-200" />
+    <div className="flex flex-col gap-4 pt-4">
+      <div className="price-range relative h-5">
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-neutral-200" />
         <div
-          className="absolute top-1/2 h-1 -translate-y-1/2 rounded bg-brand"
-          style={{ insetInlineStart: pct(lo), insetInlineEnd: `calc(100% - ${pct(hi)})` }}
+          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand"
+          style={{ insetInlineStart: pct(loValue), insetInlineEnd: `calc(100% - ${pct(hiValue)})` }}
         />
         <input
           type="range"
-          min={0}
-          max={last}
-          value={lo}
+          min={floor}
+          max={ceil}
+          step={step}
+          value={loValue}
           aria-label={t.minPrice}
-          aria-valuetext={label(steps[lo])}
-          onChange={(e) => {
-            setLo(Math.min(Number(e.target.value), hi - 1));
-            submitSoon(SLIDE_SUBMIT_DELAY);
-          }}
+          aria-valuetext={formatPrice(loValue, locale, { trim: true })}
+          onChange={(e) => setLo(fromSlider(Math.min(Number(e.target.value), hiValue - step), floor))}
         />
         <input
           type="range"
-          min={0}
-          max={last}
-          value={hi}
+          min={floor}
+          max={ceil}
+          step={step}
+          value={hiValue}
           aria-label={t.maxPrice}
-          aria-valuetext={label(steps[hi])}
-          onChange={(e) => {
-            setHi(Math.max(Number(e.target.value), lo + 1));
-            submitSoon(SLIDE_SUBMIT_DELAY);
-          }}
+          aria-valuetext={formatPrice(hiValue, locale, { trim: true })}
+          onChange={(e) => setHi(fromSlider(Math.max(Number(e.target.value), loValue + step), ceil))}
         />
       </div>
-      <div className="flex items-center gap-2 text-sm">
-        <select
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
           name="price_min"
-          value={minValue}
+          inputMode="decimal"
+          min={floor}
+          max={ceil}
+          step="any"
+          value={lo}
+          placeholder={t.min}
           aria-label={t.minPrice}
-          onChange={(e) => {
-            setLo(e.target.value ? steps.indexOf(Number(e.target.value)) : 0);
-            submitSoon(0);
-          }}
-          className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-2"
-        >
-          <option value="">{t.min}</option>
-          {steps.slice(1, last).map((v, i) => (
-            <option key={v} value={v} disabled={i + 1 >= hi}>
-              {label(v)}
-            </option>
-          ))}
-        </select>
-        <span className="text-neutral-500">{t.to}</span>
-        <select
+          onChange={(e) => setLo(e.target.value)}
+          className={box}
+        />
+        <span aria-hidden className="text-neutral-400">
+          –
+        </span>
+        <input
+          type="number"
           name="price_max"
-          value={maxValue}
+          inputMode="decimal"
+          min={floor}
+          max={ceil}
+          step="any"
+          value={hi}
+          placeholder={t.max}
           aria-label={t.maxPrice}
-          onChange={(e) => {
-            setHi(e.target.value ? steps.indexOf(Number(e.target.value)) : last);
-            submitSoon(0);
-          }}
-          className="min-w-0 flex-1 rounded border border-neutral-300 px-2 py-2"
-        >
-          {steps.slice(1, last).map((v, i) => (
-            <option key={v} value={v} disabled={i + 1 <= lo}>
-              {label(v)}
-            </option>
-          ))}
-          <option value="">{t.max}</option>
-        </select>
+          onChange={(e) => setHi(e.target.value)}
+          className={box}
+        />
       </div>
+      <p className="-mt-2 flex justify-between text-xs text-neutral-500">
+        <span>{formatPrice(floor, locale, { trim: true })}</span>
+        <span>{formatPrice(ceil, locale, { trim: true })}</span>
+      </p>
+      <button
+        type="submit"
+        className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand/90"
+      >
+        {t.apply}
+      </button>
     </div>
   );
 }

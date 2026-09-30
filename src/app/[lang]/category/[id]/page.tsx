@@ -11,7 +11,7 @@ import {
   getFilters,
   getPriceBounds,
   parseSort,
-  priceSteps,
+  sliderRange,
   selectedFilters,
   selectedPrice,
   visibleChildren,
@@ -133,7 +133,7 @@ export default async function CategoryPage({
           <FilterPanel
             groups={groups}
             selected={filters}
-            price={bounds ? { steps: priceSteps(bounds), selected: price } : undefined}
+            price={bounds ? { ...sliderRange(bounds), selected: price } : undefined}
             locale={locale}
             clearHref={`/${locale}/category/${category.id}`}
             dict={dict}

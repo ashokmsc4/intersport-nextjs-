@@ -6,7 +6,20 @@ import { useEffect, useRef, useTransition } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { FilterGroup, PriceRange } from "@/lib/magento/catalog";
+import { ChevronIcon } from "@/components/icons";
 import { PriceFilter } from "./PriceFilter";
+
+/** Group heading with a chevron that turns as the group opens (no native marker). */
+const summaryClass =
+  "flex cursor-pointer list-none items-center justify-between gap-2 py-1 text-sm font-semibold [&::-webkit-details-marker]:hidden";
+
+function Chevron() {
+  return (
+    <span className="text-neutral-500 transition-transform [&_svg]:size-4 rotate-90 group-open:-rotate-90">
+      <ChevronIcon />
+    </span>
+  );
+}
 
 /** Id of the filter form; SortSelect joins it through the `form` attribute. */
 export const FILTER_FORM_ID = "listing-filters";
@@ -27,8 +40,8 @@ export function FilterPanel({
 }: {
   groups: FilterGroup[];
   selected: Record<string, string[]>;
-  /** Price slider stops and the chosen bounds; omitted when the listing has no price spread. */
-  price?: { steps: number[]; selected: PriceRange };
+  /** Price slider range and the chosen bounds; omitted when the listing has no prices. */
+  price?: { min: number; max: number; step: number; selected: PriceRange };
   locale: Locale;
   /** Search term to keep when filtering search results. */
   query?: string;
@@ -84,15 +97,20 @@ export function FilterPanel({
             {active > 0 && ` (${active})`}
           </p>
           {price && (
-            <details open className="border-b border-neutral-200 pb-3">
-              <summary className="cursor-pointer text-sm font-semibold">
-                {t.price}
-                {priceActive && " (1)"}
+            <details open className="group border-b border-neutral-200 pb-4">
+              <summary className={summaryClass}>
+                <span>
+                  {t.priceRange}
+                  {priceActive && " (1)"}
+                </span>
+                <Chevron />
               </summary>
               <PriceFilter
-                // Fresh slider state per listing and per applied range.
-                key={`${price.steps.join(",")}|${price.selected.min}|${price.selected.max}`}
-                steps={price.steps}
+                // Fresh state per listing and per applied range.
+                key={`${price.min}-${price.max}|${price.selected.min}|${price.selected.max}`}
+                floor={price.min}
+                ceil={price.max}
+                step={price.step}
                 min={price.selected.min}
                 max={price.selected.max}
                 locale={locale}
@@ -106,11 +124,14 @@ export function FilterPanel({
               <details
                 key={group.attribute_code}
                 open={chosen.length > 0}
-                className="border-b border-neutral-200 pb-3"
+                className="group border-b border-neutral-200 pb-3"
               >
-                <summary className="cursor-pointer text-sm font-semibold">
-                  {group.default_frontend_label}
-                  {chosen.length > 0 && ` (${chosen.length})`}
+                <summary className={summaryClass}>
+                  <span>
+                    {group.default_frontend_label}
+                    {chosen.length > 0 && ` (${chosen.length})`}
+                  </span>
+                  <Chevron />
                 </summary>
                 <ul className="mt-2 flex max-h-60 flex-col gap-1 overflow-y-auto text-sm">
                   {group.options.map((option) => (
