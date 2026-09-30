@@ -114,3 +114,27 @@ export const ChevronIcon = () => (
     <path d="m9 6 6 6-6 6" />
   </svg>
 );
+
+export const TrashIcon = () => (
+  <svg {...base} width={18} height={18}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+  </svg>
+);
+
+export const PlusIcon = () => (
+  <svg {...base} width={16} height={16}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+export const MinusIcon = () => (
+  <svg {...base} width={16} height={16}>
+    <path d="M5 12h14" />
+  </svg>
+);
+
+export const CloseIcon = () => (
+  <svg {...base}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+);

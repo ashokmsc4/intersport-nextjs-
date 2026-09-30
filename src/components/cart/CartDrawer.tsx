@@ -21,7 +21,16 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { formatPrice } from "@/lib/format";
 import { ProductImage } from "@/components/ProductImage";
-import { BagIcon, UserIcon } from "@/components/icons";
+import {
+  BagIcon,
+  CloseIcon,
+  MinusIcon,
+  PlusIcon,
+  StoreIcon,
+  TrashIcon,
+  TruckIcon,
+  UserIcon,
+} from "@/components/icons";
 
 type Ctx = {
   openCart: (options?: { added?: boolean }) => void;
@@ -142,20 +151,22 @@ export function CartDrawerProvider({
             onClick={() => setOpen(false)}
             className="absolute inset-0 bg-black/40"
           />
-          <aside className="absolute inset-y-0 end-0 flex w-full max-w-md flex-col bg-white shadow-xl">
-            <header className="flex items-center justify-between border-b border-neutral-200 p-4">
-              <h2 className="text-lg font-bold">
+          <aside className="absolute inset-y-0 end-0 flex w-full max-w-md flex-col bg-neutral-100 shadow-xl">
+            <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-4">
+              <h2 className="text-base font-bold uppercase tracking-wide">
                 {t.title}
-                {cart && cart.count > 0 && ` (${cart.count})`}
+                {cart && cart.count > 0 && (
+                  <span className="ms-2 font-normal text-neutral-500">({cart.count})</span>
+                )}
               </h2>
               <button
                 ref={closeRef}
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded px-2 py-1 text-2xl leading-none"
+                className="rounded p-1 hover:text-brand"
                 aria-label={t.close}
               >
-                ×
+                <CloseIcon />
               </button>
             </header>
 
@@ -165,110 +176,134 @@ export function CartDrawerProvider({
               </p>
             )}
 
-            <div className="flex-1 overflow-y-auto" aria-busy={pending}>
+            <div className="flex-1 overflow-y-auto p-3" aria-busy={pending}>
               {!cart ? (
-                <p className="p-4 text-sm text-neutral-500">{t.loading}</p>
+                <p className="p-1 text-sm text-neutral-500">{t.loading}</p>
               ) : cart.lines.length === 0 ? (
-                <p className="p-4 text-neutral-600">{t.empty}</p>
+                <div className="rounded-lg bg-white p-6 text-center text-sm text-neutral-600">{t.empty}</div>
               ) : (
-                <ul className="divide-y divide-neutral-200">
-                  {cart.lines.map((line) => (
-                    <li key={line.itemId} className="flex gap-3 p-4">
-                      <ProductImage
-                        src={line.image}
-                        alt=""
-                        sizes="80px"
-                        optimized={optimized(line.image)}
-                        className="size-20 shrink-0 rounded"
-                      />
-                      <div className="flex flex-1 flex-col gap-1 text-sm">
-                        {line.brand && (
-                          <p className="text-xs uppercase tracking-wide text-neutral-500">{line.brand}</p>
-                        )}
-                        <p className="font-medium">{line.name}</p>
-                        <p className="text-xs text-neutral-600">
-                          {[
-                            line.size && `${dict.cart.size}: ${line.size}`,
-                            line.color && `${dict.cart.color}: ${line.color}`,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </p>
-                        {line.pickupStore && (
-                          <p className="text-xs text-brand">
-                            {dict.delivery.pickupFrom.replace("{store}", line.pickupStore)}
-                          </p>
-                        )}
-                        <div className="mt-1 flex items-center gap-3">
-                          <select
-                            aria-label={dict.cart.update}
-                            value={line.qty}
-                            disabled={pending}
-                            onChange={(e) =>
-                              change(updateQtyAction, {
-                                itemId: line.itemId,
-                                sku: line.sku,
-                                qty: e.target.value,
-                                sourceCode: line.sourceCode,
-                              })
-                            }
-                            className="rounded border border-neutral-300 px-2 py-1"
-                          >
-                            {Array.from(
-                              { length: Math.max(line.qty, Math.min(10, line.maxQty || 10)) },
-                              (_, i) => (
-                                <option key={i + 1} value={i + 1}>
-                                  {i + 1}
-                                </option>
-                              ),
+                <ul className="flex flex-col gap-3">
+                  {cart.lines.map((line) => {
+                    const limit = Math.max(line.qty, Math.min(10, line.maxQty || 10));
+                    const setQty = (qty: number) =>
+                      change(updateQtyAction, {
+                        itemId: line.itemId,
+                        sku: line.sku,
+                        qty: String(qty),
+                        sourceCode: line.sourceCode,
+                      });
+                    return (
+                      <li key={line.itemId} className="flex gap-4 rounded-lg bg-white p-4">
+                        <ProductImage
+                          src={line.image}
+                          alt=""
+                          sizes="80px"
+                          optimized={optimized(line.image)}
+                          className="size-20 shrink-0 rounded"
+                        />
+                        <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+                          <div className="flex items-start gap-2">
+                            <p className="flex-1 font-semibold uppercase">{line.name}</p>
+                            <button
+                              type="button"
+                              disabled={pending}
+                              onClick={() => change(removeItemAction, { itemId: line.itemId })}
+                              aria-label={t.removeItem.replace("{name}", line.name)}
+                              title={dict.cart.remove}
+                              className="-m-1 shrink-0 rounded p-1 text-neutral-400 hover:text-brand-accent disabled:opacity-50"
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                          {(line.size || line.color) && (
+                            <p className="text-xs text-neutral-600">
+                              {line.size && (
+                                <>
+                                  {dict.cart.size}: <b dir="auto" className="text-neutral-900">{line.size}</b>
+                                </>
+                              )}
+                              {line.size && line.color && " · "}
+                              {line.color && (
+                                <>
+                                  {dict.cart.color}: <b dir="auto" className="text-neutral-900">{line.color}</b>
+                                </>
+                              )}
+                            </p>
+                          )}
+                          <p className="flex items-center gap-1.5 text-xs text-neutral-600 [&_svg]:size-4 [&_svg]:shrink-0">
+                            {line.pickupStore ? (
+                              <>
+                                <StoreIcon />
+                                {dict.delivery.pickup} · {line.pickupStore}
+                              </>
+                            ) : (
+                              <>
+                                <TruckIcon />
+                                {dict.delivery.home}
+                              </>
                             )}
-                          </select>
-                          <button
-                            type="button"
-                            disabled={pending}
-                            onClick={() => change(removeItemAction, { itemId: line.itemId })}
-                            className="text-xs text-neutral-500 underline hover:text-brand-accent"
-                          >
-                            {dict.cart.remove}
-                          </button>
+                          </p>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <p>
+                              <span className="font-bold">{formatPrice(line.lineTotal, locale)}</span>
+                              {line.lineTotal < line.lineBefore && (
+                                <s className="ms-2 text-xs text-neutral-500">
+                                  {formatPrice(line.lineBefore, locale)}
+                                </s>
+                              )}
+                            </p>
+                            <div className="flex items-center rounded border border-neutral-300">
+                              <button
+                                type="button"
+                                disabled={pending || line.qty <= 1}
+                                onClick={() => setQty(line.qty - 1)}
+                                aria-label={t.decrease.replace("{name}", line.name)}
+                                className="p-2 hover:text-brand disabled:text-neutral-300"
+                              >
+                                <MinusIcon />
+                              </button>
+                              <span aria-live="polite" className="min-w-8 text-center font-semibold">
+                                {line.qty}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={pending || line.qty >= limit}
+                                onClick={() => setQty(line.qty + 1)}
+                                aria-label={t.increase.replace("{name}", line.name)}
+                                className="p-2 hover:text-brand disabled:text-neutral-300"
+                              >
+                                <PlusIcon />
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-end text-sm">
-                        <p className="font-semibold">{formatPrice(line.lineTotal, locale)}</p>
-                        {line.lineTotal < line.lineBefore && (
-                          <s className="text-xs text-neutral-500">
-                            {formatPrice(line.lineBefore, locale)}
-                          </s>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
 
             {cart && cart.lines.length > 0 && (
-              <footer className="flex flex-col gap-3 border-t border-neutral-200 p-4">
-                <p className="flex justify-between font-semibold">
-                  <span>{t.subtotal}</span>
-                  <span>{formatPrice(cart.subtotal, locale)}</span>
+              <footer className="flex flex-col gap-3 border-t border-neutral-200 bg-white p-4">
+                <p className="flex items-center justify-between">
+                  <span className="text-sm text-neutral-600">{t.subtotal}</span>
+                  <span className="text-lg font-bold">{formatPrice(cart.subtotal, locale)}</span>
                 </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    href={`/${locale}/cart`}
-                    onClick={() => setOpen(false)}
-                    className="rounded border border-neutral-800 px-4 py-3 text-center font-semibold"
-                  >
-                    {t.viewCart}
-                  </Link>
-                  <Link
-                    href={`/${locale}/checkout`}
-                    onClick={() => setOpen(false)}
-                    className="rounded bg-brand px-4 py-3 text-center font-semibold text-white"
-                  >
-                    {t.checkout}
-                  </Link>
-                </div>
+                <Link
+                  href={`/${locale}/checkout`}
+                  onClick={() => setOpen(false)}
+                  className="rounded bg-brand px-4 py-3.5 text-center text-sm font-bold uppercase tracking-wide text-white hover:bg-brand/90"
+                >
+                  {t.checkout}
+                </Link>
+                <Link
+                  href={`/${locale}/cart`}
+                  onClick={() => setOpen(false)}
+                  className="rounded border border-brand px-4 py-3.5 text-center text-sm font-bold uppercase tracking-wide text-brand hover:bg-brand/5"
+                >
+                  {t.viewCart}
+                </Link>
               </footer>
             )}
           </aside>

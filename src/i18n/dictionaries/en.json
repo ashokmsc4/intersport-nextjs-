@@ -285,13 +285,16 @@
     "storeChoices": "Stores"
   },
   "miniCart": {
-    "title": "Your bag",
+    "title": "Shopping cart",
     "close": "Close",
-    "empty": "Your bag is empty.",
-    "viewCart": "View bag",
-    "checkout": "Checkout",
+    "empty": "Your cart is empty.",
+    "viewCart": "Go to cart",
+    "checkout": "Proceed to checkout",
     "subtotal": "Subtotal",
-    "added": "Added to your bag",
-    "loading": "Loading…"
+    "added": "Added to your cart",
+    "loading": "Loading…",
+    "decrease": "Decrease quantity of {name}",
+    "increase": "Increase quantity of {name}",
+    "removeItem": "Remove {name}"
   }
 }
