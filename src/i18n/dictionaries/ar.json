@@ -188,7 +188,12 @@
     "back": "رجوع",
     "freeShipping": "شحن مجاني",
     "progress": "مراحل الدفع",
-    "completeAddress": "يرجى إكمال هذا العنوان."
+    "completeAddress": "يرجى إكمال هذا العنوان.",
+    "itemCount": "{count} منتجات",
+    "shippingNext": "في الخطوة التالية",
+    "youSave": "وفرت {amount}",
+    "secure": "دفع آمن",
+    "itemOne": "منتج واحد"
   },
   "errors": {
     "required": "يرجى تعبئة جميع الحقول المطلوبة.",

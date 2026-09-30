@@ -57,6 +57,7 @@ export default async function CheckoutPage({
     .map((a) => ({
       id: a.address_id,
       label: addressLine(a, dict.checkout),
+      isDefault: a.is_default_shipping === 1,
       address: {
         firstname: a.firstname,
         lastname: a.lastname,

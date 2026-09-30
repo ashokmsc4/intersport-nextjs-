@@ -4,7 +4,7 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import type { PaymentMethod, ShippingMethod } from "@/lib/magento/checkout";
 import { formatPrice } from "@/lib/format";
-import { CardIcon, CartIcon, CheckIcon, PinIcon } from "@/components/icons";
+import { BoxIcon, CardIcon, CartIcon, CheckIcon, PinIcon, RocketIcon, StoreIcon, TruckIcon } from "@/components/icons";
 
 export type CheckoutStep = "address" | "payment";
 
@@ -33,8 +33,12 @@ export function CheckoutStepper({
           const active = i === current;
           const circle = (
             <span
-              className={`flex size-10 items-center justify-center rounded-full [&_svg]:size-[18px] ${
-                done || active ? "bg-brand text-white" : "bg-white text-neutral-400"
+              className={`flex size-10 items-center justify-center rounded-full transition [&_svg]:size-[18px] ${
+                active
+                  ? "bg-brand text-white shadow-md ring-4 ring-brand/15"
+                  : done
+                    ? "bg-brand text-white"
+                    : "border border-neutral-300 bg-white text-neutral-400"
               }`}
             >
               {done ? <CheckIcon /> : <Icon />}
@@ -73,9 +77,11 @@ export function CheckoutStepper({
 
 /** Selectable card row shared by the shipping, payment and saved-address choices. */
 export const optionClass =
-  "flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3.5 text-sm transition-colors has-[:checked]:border-brand has-[:checked]:bg-brand/5 has-[:checked]:ring-1 has-[:checked]:ring-brand border-neutral-200 hover:border-neutral-400";
+  "flex cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-3.5 text-sm transition hover:border-neutral-400 has-[:checked]:border-brand has-[:checked]:bg-brand/[0.04] has-[:checked]:ring-1 has-[:checked]:ring-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40";
 
 const radioClass = "size-4 shrink-0 accent-brand";
+
+const SHIPPING_ICONS = { express: RocketIcon, pickup: StoreIcon, nextDay: BoxIcon, other: TruckIcon };
 
 function shippingKind(code: string) {
   if (code.startsWith("same_day")) return "express" as const;
@@ -105,6 +111,7 @@ export function ShippingOptions({
     <div role="radiogroup" aria-label={t.shippingMethod} className="flex flex-col gap-3">
       {methods.map((method) => {
         const kind = shippingKind(method.code);
+        const Icon = SHIPPING_ICONS[kind];
         const cost = Number(method.cost);
         const [before, after] = t.getItIn.split("{time}");
         return (
@@ -117,8 +124,11 @@ export function ShippingOptions({
               onChange={() => onChange(method.code)}
               className={radioClass}
             />
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 [&_svg]:size-5">
+              <Icon />
+            </span>
             <span className="flex flex-1 flex-col">
-              <span>{method.title}</span>
+              <span className="font-medium">{method.title}</span>
               {kind !== "other" && (
                 <span className="text-xs text-neutral-500">
                   {kind === "nextDay" && t.getItBy.replace("{date}", tomorrow)}
@@ -133,7 +143,7 @@ export function ShippingOptions({
                 </span>
               )}
             </span>
-            <span className="shrink-0 font-semibold">
+            <span className={`shrink-0 font-semibold ${cost > 0 ? "" : "text-green-700"}`}>
               {cost > 0 ? formatPrice(cost, locale) : t.freeShipping}
             </span>
           </label>
@@ -207,17 +217,23 @@ export function PaymentOptions({
                 onChange={() => onChange(choice)}
                 className={radioClass}
               />
-              {logo && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={logo.src}
-                  alt=""
-                  width={logo.width}
-                  className={`h-auto ${logo.dark ? "" : "rounded border border-neutral-200 bg-white p-0.5"}`}
-                />
-              )}
-              {code === "cashondelivery" && <CodBadge />}
-              <span>{choice.label}</span>
+              {/* Fixed-width logo slot so the labels line up. */}
+              <span className="flex h-7 w-20 shrink-0 items-center [&_svg]:size-5 [&_svg]:text-neutral-500">
+                {logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logo.src}
+                    alt=""
+                    width={logo.width}
+                    className={`h-auto max-h-7 ${logo.dark ? "" : "rounded border border-neutral-200 bg-white p-0.5"}`}
+                  />
+                ) : code === "cashondelivery" ? (
+                  <CodBadge />
+                ) : (
+                  <CardIcon />
+                )}
+              </span>
+              <span className="font-medium">{choice.label}</span>
             </label>
             {code === "cashondelivery" && value === choice.key && (
               <p className="mt-2 px-4 text-xs text-neutral-600">{t.codNote}</p>

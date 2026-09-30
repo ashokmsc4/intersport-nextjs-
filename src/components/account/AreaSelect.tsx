@@ -20,7 +20,8 @@ export function AreaSelect({
 }) {
   const areas =
     governorates.find((g) => g.governorate === value.governorate)?.areas ?? [];
-  const selectClass = "rounded border border-neutral-300 px-3 py-2 text-base";
+  const selectClass =
+    "rounded-md border border-neutral-300 bg-white px-3 py-2.5 text-base transition focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none";
 
   return (
     <>

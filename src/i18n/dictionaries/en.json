@@ -188,7 +188,12 @@
     "back": "Back",
     "freeShipping": "Free shipping",
     "progress": "Checkout progress",
-    "completeAddress": "Please complete this address."
+    "completeAddress": "Please complete this address.",
+    "itemCount": "{count} items",
+    "shippingNext": "Next step",
+    "youSave": "You save {amount}",
+    "secure": "Secure checkout",
+    "itemOne": "1 item"
   },
   "errors": {
     "required": "Please fill in all required fields.",

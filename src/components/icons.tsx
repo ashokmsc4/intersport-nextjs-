@@ -158,3 +158,16 @@ export const TagIcon = () => (
     <circle cx="7.5" cy="7.5" r="1.3" />
   </svg>
 );
+
+export const LockIcon = () => (
+  <svg {...base} width={16} height={16}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+export const ArrowIcon = () => (
+  <svg {...base} width={18} height={18}>
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+);

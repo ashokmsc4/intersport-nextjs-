@@ -13,7 +13,7 @@ export function Field({
         dir={input.type === "email" || input.type === "tel" ? "ltr" : undefined}
         {...input}
         aria-invalid={invalid || undefined}
-        className="rounded border border-neutral-300 px-3 py-2 text-base aria-invalid:border-brand-accent"
+        className="rounded-md border border-neutral-300 px-3 py-2.5 text-base transition focus:border-brand focus:ring-2 focus:ring-brand/20 focus:outline-none aria-invalid:border-brand-accent"
       />
     </label>
   );
