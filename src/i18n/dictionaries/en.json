@@ -114,7 +114,17 @@
     "sendLink": "Send reset link",
     "sending": "Sending…",
     "resetSent": "If an account exists for {email}, we've sent a password reset link to it.",
-    "backToLogin": "Back to sign in"
+    "backToLogin": "Back to sign in",
+    "dashboard": "Dashboard",
+    "myAddresses": "My addresses",
+    "wishlist": "My wishlist",
+    "settings": "Settings",
+    "ordersHint": "View and track your orders",
+    "wishlistHint": "Your saved products",
+    "addressesHint": "Manage delivery addresses",
+    "settingsHint": "Account settings",
+    "wishlistEmpty": "You haven't saved any products yet.",
+    "accountMenu": "Account menu"
   },
   "cart": {
     "title": "Your cart",
