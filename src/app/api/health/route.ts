@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchMedia, mediaProblem } from "@/lib/media-fetch";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +31,26 @@ export async function GET() {
     }
   };
 
+  const media = async (url: string) => {
+    const started = Date.now();
+    const res = await fetchMedia(new URL(url));
+    const problem = mediaProblem(res);
+    return {
+      ok: problem === null,
+      ms: Date.now() - started,
+      ...(problem ? { problem } : {}),
+    };
+  };
+
   const checks = base
     ? {
         settings: await probe(`${base}${settingsPath}/${store}/settings/config.json`),
         rest: await probe(`${base}/rest/${store}/V1/aaw/arealist`),
+        // One image from the Magento host and one from the banner CDN.
+        productImage: await media(`${base}/media/catalog/category/INT-CATEGORY_APP-SPORTS_copy.png`),
+        bannerImage: await media(
+          "https://static.aawweb.com/media/weltpixel/owlcarouselslider/images/r/u/running.jpg",
+        ),
       }
     : null;
 
@@ -42,6 +59,7 @@ export async function GET() {
     storeCodes: { en: store, ar: process.env.MAGENTO_STORE_CODE_AR ?? "intersport_ar" },
     userAgentSet: Boolean(userAgent),
     region: process.env.VERCEL_REGION ?? null,
+    imageProxy: process.env.IMAGE_PROXY ?? (process.env.VERCEL === "1" ? "on (Vercel)" : "off"),
     checks,
     hint: !base
       ? "Set MAGENTO_BASE_URL and redeploy."
