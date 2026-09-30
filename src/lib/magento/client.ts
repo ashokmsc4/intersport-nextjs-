@@ -1,8 +1,9 @@
 import "server-only";
 import type { Locale } from "@/i18n/config";
+import { MAGENTO_BASE_URL } from "@/lib/base-url";
 import { WAF_MESSAGE, backendHeaders, isWafChallenge } from "./backend-headers";
 
-const BASE_URL = (process.env.MAGENTO_BASE_URL ?? "").replace(/\/$/, "");
+const BASE_URL = MAGENTO_BASE_URL;
 const REVALIDATE = Number(process.env.MAGENTO_REVALIDATE_SECONDS ?? 300);
 const SETTINGS_PATH =
   process.env.MAGENTO_APP_SETTINGS_PATH ?? "/media/mobile-app/intersport";

@@ -1,3 +1,5 @@
+import { MAGENTO_BASE_URL } from "@/lib/base-url";
+
 /**
  * Magento media hosts. Images from them load directly in the browser by default;
  * with IMAGE_PROXY=true they go through /api/media, which only fetches these hosts.
@@ -7,7 +9,7 @@ export function imageHosts(): string[] {
   const hosts = new Set<string>(["static.aawweb.com", "prod.aaw.com"]);
   const media = process.env.MAGENTO_MEDIA_URL;
   if (media) hosts.add(new URL(media).hostname);
-  const base = process.env.MAGENTO_BASE_URL;
+  const base = MAGENTO_BASE_URL;
   if (base) {
     // Magento content mixes "www." and bare-domain media URLs; allow both.
     const host = new URL(base).hostname;

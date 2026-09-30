@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchMedia, mediaProblem } from "@/lib/media-fetch";
 import { backendHeaders, isWafChallenge } from "@/lib/magento/backend-headers";
 import { MEDIA_URL } from "@/lib/magento/client";
+import { parseBaseUrl } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
  * backend answers. Reports no secrets (only whether optional values are set).
  */
 export async function GET() {
-  const base = (process.env.MAGENTO_BASE_URL ?? "").replace(/\/$/, "");
+  const { url: base, problem: baseProblem } = parseBaseUrl();
   const store = process.env.MAGENTO_STORE_CODE_EN ?? "intersport_en";
   const settingsPath = process.env.MAGENTO_APP_SETTINGS_PATH ?? "/media/mobile-app/intersport";
   const userAgent = process.env.MAGENTO_USER_AGENT;
@@ -34,6 +35,11 @@ export async function GET() {
         ok: res.ok && json,
         ms: Date.now() - started,
         contentType: type,
+        // Who answered: e.g. "cloudflare", "awselb/2.0", "nginx"; and the error page's title.
+        server: res.headers.get("server") ?? undefined,
+        ...(res.headers.get("cf-ray") ? { cfRay: res.headers.get("cf-ray") } : {}),
+        ...(res.headers.get("x-amzn-requestid") ? { amznRequestId: res.headers.get("x-amzn-requestid") } : {}),
+        ...(body ? { page: body.match(/<title>([^<]{0,120})<\/title>/i)?.[1]?.trim() ?? body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) } : {}),
         ...(isWafChallenge(body) ? { blockedBy: "AWS WAF bot check (Human Verification page)" } : {}),
       };
     } catch (error) {
@@ -73,6 +79,7 @@ export async function GET() {
 
   return NextResponse.json({
     magentoBaseUrl: base || "(not set)",
+    ...(baseProblem ? { magentoBaseUrlProblem: baseProblem } : {}),
     storeCodes: { en: store, ar: process.env.MAGENTO_STORE_CODE_AR ?? "intersport_ar" },
     userAgentSet: Boolean(userAgent),
     accessHeaderSet: accessHeader,
@@ -84,7 +91,9 @@ export async function GET() {
       ? "Set MAGENTO_BASE_URL and redeploy."
       : blocked
         ? "Magento's AWS WAF serves this server its bot check. Ask the hosting team to allow requests that carry a secret header, then set MAGENTO_ACCESS_HEADER_NAME and MAGENTO_ACCESS_HEADER_VALUE and redeploy."
-        : checks && !checks.rest.ok && checks.rest.status === 403
+        : baseProblem
+          ? baseProblem
+          : checks && !checks.rest.ok && checks.rest.status === 403
         ? "Magento's firewall rejected this server (403): set MAGENTO_USER_AGENT, or ask the hosting team to allow this server."
         : undefined,
   });

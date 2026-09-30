@@ -47,5 +47,6 @@ export function mediaProblem(res: Response | string): string | null {
   if (typeof res === "string") return res;
   const type = res.headers.get("content-type") ?? "";
   if (res.ok && type.startsWith("image/")) return null;
-  return `upstream ${res.status} ${type || "(no content type)"}`;
+  const server = res.headers.get("server");
+  return `upstream ${res.status} ${type || "(no content type)"}${server ? ` from ${server}` : ""}`;
 }

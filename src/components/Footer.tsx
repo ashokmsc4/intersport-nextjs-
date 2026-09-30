@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MAGENTO_BASE_URL } from "@/lib/base-url";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 
@@ -9,7 +10,7 @@ type Links = Dictionary["footer"];
  * until they are rebuilt here. Arabic pages use Magento's store switch parameter.
  */
 function magentoPage(locale: Locale, path: string) {
-  const base = (process.env.MAGENTO_BASE_URL ?? "https://www.intersport.com.kw").replace(/\/$/, "");
+  const base = MAGENTO_BASE_URL || "https://www.intersport.com.kw";
   const url = `${base}/${path.replace(/^\//, "")}`;
   return locale === "ar" ? `${url}?___store=${process.env.MAGENTO_STORE_CODE_AR ?? "intersport_ar"}` : url;
 }
