@@ -20,12 +20,14 @@ import { ProductResults } from "@/components/catalog/ProductResults";
 
 const PAGE_SIZE = 24;
 
+/** The category, or the reason Magento couldn't be read (the page then shows a notice). */
 async function load(lang: string, id: string) {
   const categoryId = Number(id);
   if (!hasLocale(lang) || !Number.isInteger(categoryId)) notFound();
-  const category = await getCategory(lang, categoryId);
+  const { value: category, error } = await settle(getCategory(lang, categoryId), `category ${id}`);
+  if (error !== null) return { locale: lang as Locale, category: null, error };
   if (!category) notFound();
-  return { locale: lang as Locale, category };
+  return { locale: lang as Locale, category, error: null };
 }
 
 export async function generateMetadata({
@@ -33,7 +35,7 @@ export async function generateMetadata({
 }: PageProps<"/[lang]/category/[id]">): Promise<Metadata> {
   const { lang, id } = await params;
   const { category } = await load(lang, id);
-  return { title: category.name };
+  return category ? { title: category.name } : {};
 }
 
 export default async function CategoryPage({
@@ -41,7 +43,10 @@ export default async function CategoryPage({
   searchParams,
 }: PageProps<"/[lang]/category/[id]">) {
   const { lang, id } = await params;
-  const { locale, category } = await load(lang, id);
+  const { locale, category, error } = await load(lang, id);
+  if (!category) {
+    return <BackendError dict={await getDictionary(locale)} reason={error} />;
+  }
   const query = await searchParams;
   const [dict, groups, trail] = await Promise.all([
     getDictionary(locale),

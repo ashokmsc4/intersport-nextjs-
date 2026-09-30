@@ -16,6 +16,8 @@ import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
+import { BackendError } from "@/components/BackendError";
+import { describeError } from "@/lib/magento/diagnose";
 
 // Product pages are rendered on first visit, then served from the cache and
 // refreshed in the background (MAGENTO_REVALIDATE_SECONDS). Store stock is live
@@ -38,7 +40,13 @@ export async function generateMetadata({
   params,
 }: PageProps<"/[lang]/product/[sku]">): Promise<Metadata> {
   const { lang, sku } = await params;
-  const { product } = await loadProduct(lang, decodeURIComponent(sku));
+  // A Magento failure is reported by the page itself (error boundary), not here.
+  const loaded = await loadProduct(lang, decodeURIComponent(sku)).catch((error) => {
+    if (error instanceof MagentoError) return null;
+    throw error;
+  });
+  if (!loaded) return {};
+  const { product } = loaded;
   const image = productImageUrl(
     product.media_gallery_entries?.[0] ?? product.image,
   );
@@ -83,7 +91,16 @@ export default async function ProductPage({
   params,
 }: PageProps<"/[lang]/product/[sku]">) {
   const { lang, sku } = await params;
-  const { locale, product } = await loadProduct(lang, decodeURIComponent(sku));
+  // Magento unreachable: show a notice. (A thrown error on a page's first cached render
+  // becomes a bare 500 without the site layout.)
+  const loaded = await loadProduct(lang, decodeURIComponent(sku)).catch((error) => {
+    if (error instanceof MagentoError) return describeError(error);
+    throw error;
+  });
+  if (typeof loaded === "string") {
+    return <BackendError dict={await getDictionary(hasLocale(lang) ? lang : "en")} reason={loaded} />;
+  }
+  const { locale, product } = loaded;
   const dict = await getDictionary(locale);
 
   const sized = (product.childrens ?? []).length > 0;
