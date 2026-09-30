@@ -7,7 +7,12 @@
 export function imageHosts(): string[] {
   const hosts = new Set<string>(["static.aawweb.com"]);
   const base = process.env.MAGENTO_BASE_URL;
-  if (base) hosts.add(new URL(base).hostname);
+  if (base) {
+    // Magento content mixes "www." and bare-domain media URLs; allow both.
+    const host = new URL(base).hostname;
+    hosts.add(host);
+    hosts.add(host.startsWith("www.") ? host.slice(4) : `www.${host}`);
+  }
   for (const h of (process.env.MAGENTO_IMAGE_HOSTS ?? "").split(",")) {
     if (h.trim()) hosts.add(h.trim());
   }
