@@ -2,10 +2,13 @@ import type { Locale } from "@/i18n/config";
 import { Price } from "./Price";
 import { ProductImage } from "./ProductImage";
 import { HoverPrefetchLink } from "./HoverPrefetchLink";
+import { productHref } from "@/lib/urls";
 
 /** What a product card shows; built on the server (see ProductCard), rendered anywhere. */
 export type ProductCardData = {
   sku: string;
+  /** For the SEO URL; without it the link goes through /product/<sku> (redirects). */
+  urlKey?: string | null;
   name: string;
   brand?: string | null;
   image: string | null;
@@ -24,7 +27,7 @@ export function ProductTile({
   const off = onSale && price > 0 ? Math.round((1 - final / price) * 100) : 0;
   return (
     <HoverPrefetchLink
-      href={`/${locale}/product/${encodeURIComponent(product.sku)}`}
+      href={productHref(locale, product)}
       // Product pages are cached (ISR); prefetch on hover so the click is instant.
       className="group flex flex-col gap-2"
     >

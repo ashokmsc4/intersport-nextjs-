@@ -1,5 +1,5 @@
 import { productImageUrl } from "@/lib/magento/client";
-import { attr, effectivePrice } from "@/lib/magento/catalog";
+import { attr, effectivePrice, productUrlKey } from "@/lib/magento/catalog";
 import type { Product, ProductDetail } from "@/lib/magento/types";
 import { ProductTile, type ProductCardData } from "./ProductTile";
 
@@ -10,6 +10,7 @@ export function cardFromListItem(product: Product): ProductCardData {
   const a = product.custom_attributes;
   return {
     sku: product.sku,
+    urlKey: productUrlKey(product),
     name: product.name,
     brand: attr(a, "vendor_name"),
     image: productImageUrl(
@@ -26,9 +27,10 @@ export function cardFromListItem(product: Product): ProductCardData {
 }
 
 /** Normalizes an item from `V1/aaw/productdetail` or recommendations. */
-export function cardFromDetail(product: ProductDetail): ProductCardData {
+export function cardFromDetail(product: ProductDetail, urlKey?: string | null): ProductCardData {
   return {
     sku: product.sku,
+    urlKey,
     name: product.name,
     brand: product.brand,
     image: productImageUrl(product.media_gallery_entries?.[0] ?? product.image),

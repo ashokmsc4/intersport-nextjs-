@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasLocale, type Locale } from "@/i18n/config";
 import { getDictionary, type Dictionary } from "@/i18n/dictionaries";
-import { getCategoryProducts, getMenuCategories } from "@/lib/magento/catalog";
+import { getCategoryIndex, getCategoryProducts, getMenuCategories } from "@/lib/magento/catalog";
+import { categoryHref } from "@/lib/urls";
 import {
   getHomeSections,
   type HomeLink,
@@ -22,9 +23,12 @@ import { productImageUrl } from "@/lib/magento/client";
 // Regenerate so a build without backend access does not freeze the error state.
 export const revalidate = 300;
 
+/** Category id → its SEO URL (see getCategoryIndex). */
+type CatHref = (id: number) => string;
+
 /** App links are category ids or absolute URLs (the app adds ?mobile=true). */
-function linkHref(locale: Locale, link: HomeLink) {
-  if (link.category) return `/${locale}/category/${link.category}`;
+function linkHref(link: HomeLink, cat: CatHref) {
+  if (link.category) return cat(link.category);
   if (link.url) {
     const url = new URL(link.url);
     url.searchParams.delete("mobile");
@@ -80,11 +84,13 @@ async function ProductRail({
   dict,
   name,
   category,
+  cat,
 }: {
   locale: Locale;
   dict: Dictionary;
   name: string;
   category: number;
+  cat: CatHref;
 }) {
   const result = await getCategoryProducts(locale, {
     categoryId: category,
@@ -94,7 +100,7 @@ async function ProductRail({
 
   return (
     <section>
-      <SectionHeader title={name} href={`/${locale}/category/${category}`} action={dict.home.viewAll} />
+      <SectionHeader title={name} href={cat(category)} action={dict.home.viewAll} />
       <Rail labels={{ previous: dict.home.previous, next: dict.home.next }}>
         {result.items.slice(0, 10).map((product) => (
           <li key={product.sku} className="w-44 shrink-0 snap-start sm:w-56">
@@ -111,10 +117,12 @@ function Section({
   locale,
   dict,
   hero,
+  cat,
 }: {
   section: HomeSection;
   locale: Locale;
   dict: Dictionary;
+  cat: CatHref;
   /** The first banner group: a full-width carousel with its first image preloaded. */
   hero: boolean;
 }) {
@@ -131,7 +139,7 @@ function Section({
             }}
           >
             {section.items.map((item, i) => (
-              <Linked key={item.image} href={linkHref(locale, item)} className="block bg-neutral-100">
+              <Linked key={item.image} href={linkHref(item, cat)} className="block bg-neutral-100">
                 <Banner
                   image={item.image}
                   desktopImage={item.desktop_image}
@@ -149,7 +157,7 @@ function Section({
           {section.items.map((item) => (
             <Linked
               key={item.image}
-              href={linkHref(locale, item)}
+              href={linkHref(item, cat)}
               className="group block overflow-hidden rounded-2xl bg-neutral-100 shadow-sm transition hover:shadow-lg [&_img]:transition-transform [&_img]:duration-500 hover:[&_img]:scale-[1.03]"
             >
               <Banner image={item.image} desktopImage={item.desktop_image} />
@@ -165,7 +173,7 @@ function Section({
             {section.items.map((item) => (
               <li key={item.image} className="w-36 shrink-0 snap-start sm:w-48">
                 <Linked
-                  href={linkHref(locale, item)}
+                  href={linkHref(item, cat)}
                   className="block overflow-hidden rounded-xl bg-neutral-100 ring-brand/0 transition hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-brand"
                 >
                   <Banner image={item.desktop_image ?? item.image} />
@@ -182,6 +190,7 @@ function Section({
           dict={dict}
           name={section.name}
           category={section.category}
+          cat={cat}
         />
       );
     case "bannerTimer": {
@@ -189,7 +198,7 @@ function Section({
       const end = Date.parse(section.endTime.replace(" ", "T"));
       return (
         <Link
-          href={`/${locale}/category/${section.category}`}
+          href={cat(section.category)}
           className="group relative flex flex-col items-center justify-between gap-5 overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-[#0a2a5c] px-6 py-8 text-white shadow-lg sm:flex-row sm:px-10"
         >
           <span aria-hidden className="absolute -end-16 -top-16 size-56 rounded-full bg-brand-accent/30 blur-2xl" />
@@ -228,10 +237,12 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   if (!hasLocale(lang)) notFound();
   const dict = await getDictionary(lang);
 
-  const [home, categories] = await Promise.all([
+  const [home, categories, index] = await Promise.all([
     settle(getHomeSections(lang), "home config"),
     getMenuCategories(lang).catch(() => []),
+    getCategoryIndex(lang).catch(() => null),
   ]);
+  const cat: CatHref = (id) => categoryHref(lang, { id, path: index?.pathById.get(id) });
   const sections = home.value;
 
   const heroIndex = sections?.findIndex((s) => s.layout === "bannerImage") ?? -1;
@@ -241,7 +252,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       {home.error !== null && <BackendError dict={dict} reason={home.error} />}
 
       {sections?.map((section, i) => (
-        <Section key={i} section={section} locale={lang} dict={dict} hero={i === heroIndex} />
+        <Section key={i} section={section} locale={lang} dict={dict} hero={i === heroIndex} cat={cat} />
       ))}
 
       {categories.length > 0 && (
@@ -251,7 +262,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             {categories.map((category) => (
               <li key={category.id}>
                 <Link
-                  href={`/${lang}/category/${category.id}`}
+                  href={cat(category.id)}
                   className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-200 shadow-sm transition hover:shadow-lg"
                 >
                   {category.custom_image ? (

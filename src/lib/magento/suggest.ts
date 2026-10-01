@@ -7,7 +7,7 @@ import { magentoStorefront } from "./client";
 export type Suggestions = {
   products: ProductCardData[];
   /** Matching categories, with their path for context ("Men › Shoes"). */
-  categories: { id: number; name: string; path: string }[];
+  categories: { id: number; name: string; path: string; urlPath: string }[];
   total: number;
 };
 
@@ -61,7 +61,7 @@ function matchCategories(tree: NavNode[], q: string) {
       // Every word must appear in the category name or one of its parents.
       const haystack = path.join(" ").toLocaleLowerCase();
       if (words.some((w) => name.includes(w)) && words.every((w) => haystack.includes(w))) {
-        found.push({ id: node.id, name: node.name, path: trail.join(" › ") });
+        found.push({ id: node.id, name: node.name, path: trail.join(" › "), urlPath: node.path });
       }
       walk(node.children, path);
     }

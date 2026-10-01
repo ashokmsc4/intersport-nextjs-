@@ -9,6 +9,8 @@ export type Category = {
   position: number;
   level: number;
   product_count: number;
+  /** URL segment; the category's URL is its ancestors' keys joined by "/" plus ".html". */
+  url_key?: string;
   children_data: Category[];
 };
 

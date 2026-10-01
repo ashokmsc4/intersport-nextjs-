@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryHref } from "@/lib/urls";
 
 /** Home › L1 › L2 › current. The last crumb is the current page (not a link). */
 export function Breadcrumbs({
@@ -7,7 +8,7 @@ export function Breadcrumbs({
   labels,
 }: {
   locale: string;
-  trail: { id: number; name: string }[];
+  trail: { id: number; name: string; path?: string }[];
   labels: { home: string; breadcrumb: string };
 }) {
   return (
@@ -26,7 +27,7 @@ export function Breadcrumbs({
                 {crumb.name}
               </span>
             ) : (
-              <Link href={`/${locale}/category/${crumb.id}`} className="hover:text-brand">
+              <Link href={categoryHref(locale, crumb)} className="hover:text-brand">
                 {crumb.name}
               </Link>
             )}

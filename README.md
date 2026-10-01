@@ -163,6 +163,23 @@ npm run cf:deploy                                     # build + deploy
 `npm run cf:preview` builds and runs the Worker locally (`wrangler dev`); put local secrets in `.dev.vars`
 (see `.dev.vars.example`). Add a custom domain under the Worker's Settings → Domains & Routes.
 
+### SEO URLs
+
+URLs match the Magento website's, with the locale in front, so links and rankings carry over:
+
+| Page | URL | Served by |
+|---|---|---|
+| Product | `/en/<url_key>.html` | `[lang]/product/[key]` |
+| Category | `/en/<url/key/path>.html` (e.g. `/en/men/men-shoes/running-0.html`) | `[lang]/category/[id]` |
+
+- `proxy.ts` rewrites SEO URLs to the internal routes. Category paths are the `url_key`s from
+  `categories.json` (per locale: some Arabic keys differ), cached for 10 minutes.
+- The REST API can't filter products by `url_key`; `skuForUrlKey` tries the key's last words as SKUs
+  (Magento builds keys as `<name>-<sku>`), keeps the exact `url_key` match, and falls back to search.
+- Redirects (301): Magento's own URLs without a locale (`/men.html`) → `/en/men.html`; old
+  `/en/category/<id>` → the category's SEO URL. Old `/en/product/<SKU>` links redirect to the product's URL.
+- Pages carry `rel=canonical` and `hreflang` (en/ar) links.
+
 ### Session
 
 Tokens live in httpOnly cookies (`src/lib/session.ts`): the customer token after sign-in, the masked guest

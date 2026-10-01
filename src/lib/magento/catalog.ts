@@ -1,6 +1,7 @@
 import "server-only";
 import type { Locale } from "@/i18n/config";
 import { magentoAppSettings, magentoRest } from "./client";
+import { pathsFromTree } from "@/lib/category-paths";
 import type {
   Category,
   CustomAttribute,
@@ -343,30 +344,55 @@ export function effectivePrice(product: {
   return { price, final: onSale ? special : price, onSale };
 }
 
-/** Menu node: visible categories only, in shop order. */
-export type NavNode = { id: number; name: string; children: NavNode[] };
+/** Menu node: visible categories only, in shop order. `path` is the SEO URL path (see categoryHref). */
+export type NavNode = { id: number; name: string; path: string; children: NavNode[] };
 
-function toNav(category: Category): NavNode {
+/**
+ * Category URL paths as on the Magento website: the url_keys from the top level down,
+ * joined by "/" (e.g. "men/men-shoes/running-0"; the URL adds ".html"). Arabic keys can
+ * differ, so this is per locale.
+ */
+export type CategoryIndex = {
+  pathById: Map<number, string>;
+  idByPath: Map<string, number>;
+};
+
+function indexCategories(root: Category): CategoryIndex {
+  return pathsFromTree(root);
+}
+
+export async function getCategoryIndex(locale: Locale): Promise<CategoryIndex> {
+  const root = await magentoAppSettings<Category>("data/categories.json", { locale });
+  return indexCategories(root);
+}
+
+function toNav(category: Category, index: CategoryIndex): NavNode {
   return {
     id: category.id,
     name: category.name,
-    children: visibleChildren(category).map(toNav),
+    path: index.pathById.get(category.id) ?? "",
+    children: visibleChildren(category).map((c) => toNav(c, index)),
   };
 }
 
 /** L1 → L2 → L3 menu tree (deeper levels are reached from category pages). */
 export async function getNavTree(locale: Locale): Promise<NavNode[]> {
   const root = await magentoAppSettings<Category>("data/categories.json", { locale });
+  const index = indexCategories(root);
   const trim = (node: NavNode, depth: number): NavNode => ({
     ...node,
     children: depth >= 3 ? [] : node.children.map((c) => trim(c, depth + 1)),
   });
-  return visibleChildren(root).map((c) => trim(toNav(c), 1));
+  return visibleChildren(root).map((c) => trim(toNav(c, index), 1));
 }
 
 /** Categories from the top level down to `id` (for breadcrumbs), or [] if not found. */
-export async function getCategoryPath(locale: Locale, id: number): Promise<Category[]> {
+export async function getCategoryPath(
+  locale: Locale,
+  id: number,
+): Promise<(Category & { path: string })[]> {
   const root = await magentoAppSettings<Category>("data/categories.json", { locale });
+  const index = indexCategories(root);
   const walk = (node: Category, trail: Category[]): Category[] | null => {
     if (node.id === id) return trail;
     for (const child of node.children_data) {
@@ -375,5 +401,63 @@ export async function getCategoryPath(locale: Locale, id: number): Promise<Categ
     }
     return null;
   };
-  return walk(root, []) ?? [];
+  return (walk(root, []) ?? []).map((c) => ({ ...c, path: index.pathById.get(c.id) ?? "" }));
+}
+
+/** One catalog-visible product by exact SKU (the endpoint's "like" is a case-insensitive match). */
+async function productBySku(locale: Locale, sku: string): Promise<Product | null> {
+  const q = new URLSearchParams();
+  const f = "searchCriteria[filter_groups]";
+  q.set(`${f}[0][filters][0][field]`, "visibility");
+  q.set(`${f}[0][filters][0][value]`, "4");
+  q.set(`${f}[0][filters][0][condition_type]`, "eq");
+  q.set(`${f}[1][filters][0][field]`, "sku");
+  q.set(`${f}[1][filters][0][value]`, sku);
+  q.set(`${f}[1][filters][0][condition_type]`, "like");
+  q.set("searchCriteria[pageSize]", "5");
+  const result = await magentoRest<SearchResult<Product>>("V1/mstore/products", {
+    locale,
+    query: q,
+    tags: [`product:${sku}`],
+  });
+  return result.items.find((p) => p.sku.toLowerCase() === sku.toLowerCase()) ?? null;
+}
+
+export const productUrlKey = (product: Product) => {
+  const key = attr(product.custom_attributes, "url_key");
+  return typeof key === "string" && key ? key : null;
+};
+
+/**
+ * SKU for a product URL key. The REST API can't filter by url_key, but Magento builds keys as
+ * "<name>-<sku>" (lowercased), so the last few words are tried as SKUs (in parallel) and the
+ * product whose url_key matches exactly wins. Keys that don't follow the pattern fall back to
+ * the website's search. Results are cached like other catalog data.
+ */
+export async function skuForUrlKey(locale: Locale, key: string): Promise<string | null> {
+  if (!/^[a-z0-9][a-z0-9-]{0,250}$/.test(key)) return null;
+  const words = key.split("-");
+  const candidates = [...new Set(
+    Array.from({ length: Math.min(5, words.length - 1) }, (_, i) => words.slice(-(i + 1)).join("-")),
+  )];
+  const found = await Promise.all(
+    candidates.map((sku) => productBySku(locale, sku).catch(() => null)),
+  );
+  const hit = found.find((p) => p && productUrlKey(p) === key);
+  if (hit) return hit.sku;
+
+  // Fallback: search for the key's words and match the url_key exactly.
+  const result = await searchProducts(locale, words.join(" "), { pageSize: 24 }).catch(() => null);
+  return result?.items.find((p) => productUrlKey(p) === key)?.sku ?? null;
+}
+
+/** URL keys for SKUs (e.g. recommendations, which come without them). Missing ones are left out. */
+export async function urlKeysForSkus(locale: Locale, skus: string[]) {
+  const products = await Promise.all(skus.map((sku) => productBySku(locale, sku).catch(() => null)));
+  const keys = new Map<string, string>();
+  products.forEach((p, i) => {
+    const key = p && productUrlKey(p);
+    if (key) keys.set(skus[i], key);
+  });
+  return keys;
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cache, Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { hasLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { MagentoError, productImageUrl } from "@/lib/magento/client";
@@ -8,7 +8,10 @@ import {
   effectivePrice,
   getProductDetail,
   getRecommendations,
+  skuForUrlKey,
+  urlKeysForSkus,
 } from "@/lib/magento/catalog";
+import { productHref } from "@/lib/urls";
 import type { ProductDetail } from "@/lib/magento/types";
 import { getSizeGuideHtml, getSizeRegions } from "@/lib/magento/sizes";
 import { isOptimizable } from "@/lib/media";
@@ -26,27 +29,44 @@ export function generateStaticParams() {
   return [];
 }
 
-const loadProduct = cache(async (lang: string, sku: string) => {
-  if (!hasLocale(lang) || !sku) notFound();
-  const product = await getProductDetail(lang, sku).catch((error) => {
+const detail = (locale: Locale, sku: string) =>
+  getProductDetail(locale, sku).catch((error) => {
     if (error instanceof MagentoError && error.status === 404) return null;
     throw error;
   });
+
+/**
+ * The product for a URL key (/en/<key>.html is rewritten here by proxy.ts). An old
+ * /en/product/<SKU> link moves permanently to the product's SEO URL.
+ */
+const loadProduct = cache(async (lang: string, key: string) => {
+  if (!hasLocale(lang) || !key) notFound();
+  const locale = lang as Locale;
+  const sku = await skuForUrlKey(locale, key);
+  if (!sku) {
+    const product = await detail(locale, key);
+    if (!product) notFound();
+    const urlKey = (await urlKeysForSkus(locale, [product.sku])).get(product.sku);
+    if (urlKey && urlKey !== key) permanentRedirect(productHref(locale, { urlKey, sku: product.sku }));
+    return { locale, product, urlKey: urlKey ?? null };
+  }
+  const product = await detail(locale, sku);
   if (!product) notFound();
-  return { locale: lang as Locale, product };
+  return { locale, product, urlKey: key };
 });
 
 export async function generateMetadata({
   params,
-}: PageProps<"/[lang]/product/[sku]">): Promise<Metadata> {
-  const { lang, sku } = await params;
+}: PageProps<"/[lang]/product/[key]">): Promise<Metadata> {
+  const { lang, key } = await params;
   // A Magento failure is reported by the page itself (error boundary), not here.
-  const loaded = await loadProduct(lang, decodeURIComponent(sku)).catch((error) => {
+  const loaded = await loadProduct(lang, decodeURIComponent(key)).catch((error) => {
     if (error instanceof MagentoError) return null;
     throw error;
   });
   if (!loaded) return {};
-  const { product } = loaded;
+  const { product, urlKey } = loaded;
+  const href = (l: Locale) => productHref(l, { urlKey, sku: product.sku });
   const image = productImageUrl(
     product.media_gallery_entries?.[0] ?? product.image,
   );
@@ -56,6 +76,11 @@ export async function generateMetadata({
         ? `${product.brand} ${product.name}`
         : product.name,
     openGraph: image ? { images: [image] } : undefined,
+    // The URL key is the same in both store views.
+    alternates: {
+      canonical: href(lang === "ar" ? "ar" : "en"),
+      languages: { en: href("en"), ar: href("ar") },
+    },
   };
 }
 
@@ -89,11 +114,11 @@ function sizeOptions(product: ProductDetail): SizeChoice[] {
 
 export default async function ProductPage({
   params,
-}: PageProps<"/[lang]/product/[sku]">) {
-  const { lang, sku } = await params;
+}: PageProps<"/[lang]/product/[key]">) {
+  const { lang, key } = await params;
   // Magento unreachable: show a notice. (A thrown error on a page's first cached render
   // becomes a bare 500 without the site layout.)
-  const loaded = await loadProduct(lang, decodeURIComponent(sku)).catch((error) => {
+  const loaded = await loadProduct(lang, decodeURIComponent(key)).catch((error) => {
     if (error instanceof MagentoError) return describeError(error);
     throw error;
   });
@@ -218,7 +243,9 @@ export default async function ProductPage({
 }
 
 async function Recommendations({ locale, sku, title }: { locale: Locale; sku: string; title: string }) {
-  const items = await getRecommendations(locale, sku).catch(() => [] as ProductDetail[]);
+  const items = (await getRecommendations(locale, sku).catch(() => [] as ProductDetail[])).slice(0, 8);
+  // Recommendations come without URL keys; look them up so the links are SEO URLs.
+  const urlKeys = await urlKeysForSkus(locale, items.map((i) => i.sku)).catch(() => new Map<string, string>());
   if (items.length === 0) return null;
   return (
     <section className="mt-12">
@@ -226,7 +253,7 @@ async function Recommendations({ locale, sku, title }: { locale: Locale; sku: st
       <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
         {items.slice(0, 8).map((item) => (
           <li key={item.sku}>
-            <ProductCard product={cardFromDetail(item)} locale={locale} />
+            <ProductCard product={cardFromDetail(item, urlKeys.get(item.sku))} locale={locale} />
           </li>
         ))}
       </ul>

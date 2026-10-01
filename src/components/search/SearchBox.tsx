@@ -9,6 +9,7 @@ import type { Suggestions } from "@/lib/magento/suggest";
 import { ProductImage } from "@/components/ProductImage";
 import { Price } from "@/components/Price";
 import { SearchIcon } from "@/components/icons";
+import { categoryHref, productHref } from "@/lib/urls";
 
 const MIN_CHARS = 2;
 const DEBOUNCE_MS = 200;
@@ -81,11 +82,8 @@ export function SearchBox({
 
   const data = result?.data;
   const options: Option[] = [
-    ...(data?.categories ?? []).map((c) => ({ key: `c${c.id}`, href: `/${locale}/category/${c.id}` })),
-    ...(data?.products ?? []).map((p) => ({
-      key: `p${p.sku}`,
-      href: `/${locale}/product/${encodeURIComponent(p.sku)}`,
-    })),
+    ...(data?.categories ?? []).map((c) => ({ key: `c${c.id}`, href: categoryHref(locale, { id: c.id, path: c.urlPath }) })),
+    ...(data?.products ?? []).map((p) => ({ key: `p${p.sku}`, href: productHref(locale, p) })),
   ];
   if (result) options.push({ key: "all", href: searchHref(result.q) });
   const optionId = (key: string) => `${id}-${key}`;
@@ -189,7 +187,7 @@ export function SearchBox({
             )}
             {data?.categories.map((c) => (
               <li key={c.id} id={optionId(`c${c.id}`)} role="option" aria-selected={options[active]?.key === `c${c.id}`}>
-                <Link href={`/${locale}/category/${c.id}`} prefetch={false} onClick={close} className={optionClass(`c${c.id}`)}>
+                <Link href={categoryHref(locale, { id: c.id, path: c.urlPath })} prefetch={false} onClick={close} className={optionClass(`c${c.id}`)}>
                   <span className="font-medium">{c.name}</span>
                   {c.path && <span className="text-xs text-neutral-500">{c.path}</span>}
                 </Link>
@@ -205,10 +203,10 @@ export function SearchBox({
               return (
                 <li key={key} id={optionId(key)} role="option" aria-selected={options[active]?.key === key}>
                   <Link
-                    href={`/${locale}/product/${encodeURIComponent(p.sku)}`}
+                    href={productHref(locale, p)}
                     prefetch={false}
                     onClick={close}
-                    onMouseEnter={() => router.prefetch(`/${locale}/product/${encodeURIComponent(p.sku)}`)}
+                    onMouseEnter={() => router.prefetch(productHref(locale, p))}
                     className={optionClass(key)}
                   >
                     <ProductImage src={p.image} alt="" sizes="48px" optimized={optimized(p.image)} className="size-12 shrink-0 rounded" />

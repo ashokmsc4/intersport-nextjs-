@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { categoryHref } from "@/lib/urls";
 import { useEffect, useState } from "react";
 import type { NavNode } from "@/lib/magento/catalog";
 
@@ -82,7 +83,7 @@ type LevelProps = { nodes: NavNode[]; depth: number; locale: string; viewAll: st
 
 /** One menu level; items with children expand in place. */
 function Level({ nodes, depth, locale, viewAll }: LevelProps) {
-  const href = (node: NavNode) => `/${locale}/category/${node.id}`;
+  const href = (node: NavNode) => categoryHref(locale, node);
   return (
     <ul className={depth === 1 ? "divide-y divide-neutral-200" : "ps-4"}>
       {nodes.map((node) =>

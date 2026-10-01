@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { categoryHref } from "@/lib/urls";
 import type { NavNode } from "@/lib/magento/catalog";
 import { MegaMenuShell } from "./MegaMenuShell";
 
-const href = (locale: string, node: NavNode) => `/${locale}/category/${node.id}`;
+const href = (locale: string, node: NavNode) => categoryHref(locale, node);
 
 /**
  * Desktop category menu. Each top-level item opens a full-width panel on hover
