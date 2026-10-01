@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { dir, hasLocale, locales } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { NavigationProgress } from "@/components/nav/NavigationProgress";
 import { CartDrawerProvider } from "@/components/cart/CartDrawer";
 import { imageHosts } from "@/lib/media";
 import "../globals.css";
@@ -36,6 +38,10 @@ export default async function LocaleLayout({
   return (
     <html lang={lang} dir={dir(lang)} className="h-full antialiased">
       <body className="flex min-h-full flex-col">
+        {/* Reads search params, so it needs its own boundary to keep pages static. */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <CartDrawerProvider
           locale={lang}
           dict={{ miniCart: dict.miniCart, cart: dict.cart, delivery: dict.delivery }}

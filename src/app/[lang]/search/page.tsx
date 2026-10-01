@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
-import { hasLocale } from "@/i18n/config";
-import { getDictionary } from "@/i18n/dictionaries";
-import { parseSort, searchProducts } from "@/lib/magento/catalog";
+import { hasLocale, type Locale } from "@/i18n/config";
+import { getDictionary, type Dictionary } from "@/i18n/dictionaries";
+import { parseSort, searchProducts, type SortKey } from "@/lib/magento/catalog";
 import { BackendError } from "@/components/BackendError";
 import { FilterPanel } from "@/components/catalog/FilterPanel";
 import { SortSelect } from "@/components/catalog/SortSelect";
@@ -12,6 +13,7 @@ import { ProductResults } from "@/components/catalog/ProductResults";
 import { warmProductPages } from "@/lib/magento/warm";
 import { SearchBox } from "@/components/search/SearchBox";
 import { imageHosts } from "@/lib/media";
+import { ProductGridSkeleton } from "@/components/skeletons/Skeletons";
 
 const PAGE_SIZE = 24;
 
@@ -44,11 +46,6 @@ export default async function SearchPage({
   const page = Math.max(1, Number(query.page) || 1);
   const sort = parseSort(query.sort);
 
-  const { value: result, error: failure } = q
-    ? await settle(searchProducts(lang, q, { sort, page, pageSize: PAGE_SIZE }), "search")
-    : { value: null, error: null };
-  if (result) after(() => warmProductPages(lang, result.items));
-
   return (
     <section>
       <h1 className="mb-6 text-2xl font-bold">
@@ -75,28 +72,57 @@ export default async function SearchPage({
             clearHref={`/${lang}/search?q=${encodeURIComponent(q)}`}
             dict={dict}
           />
-          <div className="listing-results">
-            {result === null ? (
-              <BackendError dict={dict} reason={failure ?? ""} />
-            ) : result.items.length === 0 ? (
-              <p>{dict.search.noResults.replace("{q}", q)}</p>
-            ) : (
-              <ProductResults
-                locale={lang}
-                dict={dict}
-                result={result}
-                page={page}
-                pageSize={PAGE_SIZE}
-                params={query}
-                path={`/${lang}/search`}
-                source={{ type: "search", q }}
-                sort={sort}
-                toolbar={<SortSelect sort={sort} dict={dict} />}
-              />
-            )}
-          </div>
+          {/* The heading and search box show at once; results stream in. A new query
+              is a new boundary, so a search from this page shows the skeleton too. */}
+          <Suspense key={`${q}|${sort}|${page}`} fallback={<ProductGridSkeleton />}>
+            <SearchResults lang={lang} dict={dict} q={q} sort={sort} page={page} query={query} />
+          </Suspense>
         </div>
       )}
     </section>
+  );
+}
+
+async function SearchResults({
+  lang,
+  dict,
+  q,
+  sort,
+  page,
+  query,
+}: {
+  lang: Locale;
+  dict: Dictionary;
+  q: string;
+  sort: SortKey;
+  page: number;
+  query: Record<string, string | string[] | undefined>;
+}) {
+  const { value: result, error: failure } = await settle(
+    searchProducts(lang, q, { sort, page, pageSize: PAGE_SIZE }),
+    "search",
+  );
+  if (result) after(() => warmProductPages(lang, result.items));
+  return (
+    <div className="listing-results">
+      {result === null ? (
+        <BackendError dict={dict} reason={failure ?? ""} />
+      ) : result.items.length === 0 ? (
+        <p>{dict.search.noResults.replace("{q}", q)}</p>
+      ) : (
+        <ProductResults
+          locale={lang}
+          dict={dict}
+          result={result}
+          page={page}
+          pageSize={PAGE_SIZE}
+          params={query}
+          path={`/${lang}/search`}
+          source={{ type: "search", q }}
+          sort={sort}
+          toolbar={<SortSelect sort={sort} dict={dict} />}
+        />
+      )}
+    </div>
   );
 }

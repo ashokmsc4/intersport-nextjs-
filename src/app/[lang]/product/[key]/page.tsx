@@ -24,12 +24,14 @@ import { Gallery } from "@/components/product/Gallery";
 import { BackendError } from "@/components/BackendError";
 import { describeError } from "@/lib/magento/diagnose";
 
-// Product pages are rendered on first visit, then served from the cache and
-// refreshed in the background (MAGENTO_REVALIDATE_SECONDS). Store stock is live
-// data, so AddToCart loads it in the browser when Click & Collect is chosen.
-export function generateStaticParams() {
-  return [];
-}
+// Product pages render per request so they stream: the loading skeleton shows the
+// moment a link is tapped and the product follows, with "You might also like"
+// streaming in last. Magento responses are still cached (each fetch sets its own
+// revalidate, MAGENTO_REVALIDATE_SECONDS), so a repeat render takes milliseconds.
+// A first-visit ISR render would instead block until the whole page was ready,
+// recommendations included. Store stock is live data, so AddToCart loads it in
+// the browser when Click & Collect is chosen.
+export const revalidate = 0;
 
 const detail = (locale: Locale, sku: string) =>
   getProductDetail(locale, sku).catch((error) => {

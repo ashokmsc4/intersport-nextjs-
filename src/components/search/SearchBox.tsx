@@ -1,5 +1,6 @@
 "use client";
 
+import Form from "next/form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
@@ -131,7 +132,8 @@ export function SearchBox({
   const s = dict.search;
 
   return (
-    <form
+    // next/form: submitting navigates in place and shows the search skeleton at once.
+    <Form
       action={`/${locale}/search`}
       role="search"
       className={`relative flex ${className}`}
@@ -149,6 +151,7 @@ export function SearchBox({
         value={value}
         autoFocus={autoFocus}
         autoComplete="off"
+        required
         role="combobox"
         aria-label={dict.nav.searchPlaceholder}
         aria-expanded={expanded}
@@ -187,7 +190,7 @@ export function SearchBox({
             )}
             {data?.categories.map((c) => (
               <li key={c.id} id={optionId(`c${c.id}`)} role="option" aria-selected={options[active]?.key === `c${c.id}`}>
-                <Link href={categoryHref(locale, { id: c.id, path: c.urlPath })} prefetch={false} onClick={close} className={optionClass(`c${c.id}`)}>
+                <Link href={categoryHref(locale, { id: c.id, path: c.urlPath })} onClick={close} className={optionClass(`c${c.id}`)}>
                   <span className="font-medium">{c.name}</span>
                   {c.path && <span className="text-xs text-neutral-500">{c.path}</span>}
                 </Link>
@@ -204,9 +207,7 @@ export function SearchBox({
                 <li key={key} id={optionId(key)} role="option" aria-selected={options[active]?.key === key}>
                   <Link
                     href={productHref(locale, p)}
-                    prefetch={false}
                     onClick={close}
-                    onMouseEnter={() => router.prefetch(productHref(locale, p))}
                     className={optionClass(key)}
                   >
                     <ProductImage src={p.image} alt="" sizes="48px" optimized={optimized(p.image)} className="size-12 shrink-0 rounded" />
@@ -240,6 +241,6 @@ export function SearchBox({
           )}
         </div>
       )}
-    </form>
+    </Form>
   );
 }

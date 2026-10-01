@@ -165,6 +165,7 @@ export function InfiniteProducts({
         {!done && status === "idle" && (
           <a
             href={`?${query ? `${query}&` : ""}page=${page + 1}`}
+            data-no-progress
             onClick={(e) => {
               e.preventDefault();
               loadMore();

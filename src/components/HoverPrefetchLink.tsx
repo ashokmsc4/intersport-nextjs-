@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 
 /**
  * Link that prefetches when the shopper shows intent (hover, touch, focus) instead
- * of when it scrolls into view, so a grid of 24 products doesn't render 24 pages.
+ * of when it is on screen. For links that sit in hidden-but-laid-out panels (the
+ * mega menu), where viewport prefetching would fetch hundreds of pages at once.
  */
 export function HoverPrefetchLink(props: Omit<React.ComponentProps<typeof Link>, "href" | "prefetch"> & { href: string }) {
   const router = useRouter();

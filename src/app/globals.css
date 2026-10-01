@@ -64,3 +64,13 @@ body:has(#listing-filters[aria-busy="true"]) .listing-results {
   opacity: 0.5;
   pointer-events: none;
 }
+
+/* Navigation progress bar (NavigationProgress): fast at first, then creeping. */
+@keyframes nav-progress {
+  from {
+    transform: scaleX(0.08);
+  }
+  to {
+    transform: scaleX(0.9);
+  }
+}

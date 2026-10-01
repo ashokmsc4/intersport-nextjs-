@@ -1,7 +1,7 @@
 import type { Locale } from "@/i18n/config";
 import { Price } from "./Price";
 import { ProductImage } from "./ProductImage";
-import { HoverPrefetchLink } from "./HoverPrefetchLink";
+import Link from "next/link";
 import { productHref } from "@/lib/urls";
 
 /** What a product card shows; built on the server (see ProductCard), rendered anywhere. */
@@ -26,9 +26,10 @@ export function ProductTile({
   // Sale badge from the list and sale prices (small rounding differences are ignored).
   const off = onSale && price > 0 ? Math.round((1 - final / price) * 100) : 0;
   return (
-    <HoverPrefetchLink
+    <Link
       href={productHref(locale, product)}
-      // Product pages are cached (ISR); prefetch on hover so the click is instant.
+      // Prefetched when visible: product pages stream, so this loads only their
+      // loading skeleton, and a tap shows it at once.
       className="group flex flex-col gap-2"
     >
       <div className="relative">
@@ -53,6 +54,6 @@ export function ProductTile({
         {product.name}
       </h2>
       <Price {...product.price} locale={locale} className="text-sm" />
-    </HoverPrefetchLink>
+    </Link>
   );
 }

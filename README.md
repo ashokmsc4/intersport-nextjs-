@@ -104,9 +104,9 @@ Browsers load Magento images directly from the CDNs; neither Vercel nor the Next
 
 - Pages don't read cookies, so they can be cached: the header gets the shopper's name and cart count in the
   browser from `/api/session` (`CartDrawerProvider`). Only cart, checkout and account pages are per-shopper.
-- Home is prerendered and refreshed every 5 minutes. Product pages are rendered on first visit, then served
-  from the cache and refreshed in the background (`MAGENTO_REVALIDATE_SECONDS`); Click & Collect stock is
-  loaded live when the shopper picks it.
+- Home is prerendered and refreshed every 5 minutes. Product pages render per request and stream (the
+  first byte leaves in ~0.1 s whatever Magento's speed) from cached Magento data
+  (`MAGENTO_REVALIDATE_SECONDS`); Click & Collect stock is loaded live when the shopper picks it.
 - Category and search pages depend on filters in the URL, so they render per request from cached Magento data.
 - Category and search listings use infinite scroll: the server renders the first 24 products, later pages
   load through the `loadListingPage` server action as the shopper nears the end (`InfiniteProducts`). The
@@ -123,8 +123,16 @@ Browsers load Magento images directly from the CDNs; neither Vercel nor the Next
   - Category pages: filters and products load in parallel; after a listing is sent, the first products'
     details and size widgets are fetched into the cache (`after()`, two at a time) so opening one is fast.
 - `MAGENTO_TIMING=1` logs every Magento call with its duration.
-- Product cards prefetch on hover/touch (`HoverPrefetchLink`), not on scroll, so a grid doesn't render 24 pages.
-- `src/app/[lang]/loading.tsx` shows an instant skeleton while a page that isn't cached yet renders.
+- Instant taps: every link responds at once, even when Magento is slow.
+  - `NavigationProgress` starts a bar at the top on the tap itself (links that only open UI carry
+    `data-no-progress`).
+  - Product, category and search routes have `loading.tsx` skeletons shaped like the page. Visible links
+    prefetch only up to that skeleton (no Magento calls), so a tap shows it in well under 100 ms and the
+    content streams in. Search results stream behind a Suspense boundary keyed by the query, so a new search
+    from the search page shows the skeleton too.
+  - Mega menu panels are hidden but laid out, so their links prefetch on hover/touch/focus
+    (`HoverPrefetchLink`) instead of all ~235 at once. The search box is a `next/form`, so a search
+    navigates in place.
 - On Vercel, set the Functions region next to the Magento server: production is hosted in Ireland, so use
   Dublin (`dub1`). The default (Washington, `iad1`) adds a transatlantic round trip to every uncached Magento
   call. Cached pages are served from Vercel's edge nearest the shopper whatever the region.
@@ -138,7 +146,7 @@ against staging: catalog, search, product pages, add to cart, Click & Collect, s
 
 - **Plan:** Workers Paid. The free plan allows 10 ms of CPU per request, which server-rendering exceeds;
   Paid allows 30 s (time spent waiting on Magento doesn't count). The bundle is ~2.5 MB compressed.
-- **Caching:** cached pages (ISR) and Magento responses are stored in R2 with a per-region in-memory
+- **Caching:** cached pages and Magento responses are stored in R2 with a per-region in-memory
   layer; background refreshes go through a Durable Object queue.
 - **Placement:** Smart Placement runs the Worker near Magento (Ireland), since pages make several
   Magento calls in a row.

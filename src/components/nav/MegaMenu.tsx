@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HoverPrefetchLink } from "@/components/HoverPrefetchLink";
 import { categoryHref } from "@/lib/urls";
 import type { NavNode } from "@/lib/magento/catalog";
 import { MegaMenuShell } from "./MegaMenuShell";
@@ -28,7 +29,6 @@ export function MegaMenu({
             <li key={l1.id} className="group">
               <Link
                 href={href(locale, l1)}
-                prefetch={false}
                 className="block border-b-2 border-transparent py-3 group-hover:border-brand group-hover:text-brand group-focus-within:border-brand"
               >
                 {l1.name}
@@ -40,20 +40,19 @@ export function MegaMenu({
                       <ul className="grid grid-cols-4 gap-x-8 gap-y-6 xl:grid-cols-5">
                         {l1.children.map((l2) => (
                           <li key={l2.id}>
-                            <Link
+                            <HoverPrefetchLink
                               href={href(locale, l2)}
-                              prefetch={false}
                               className="font-bold text-neutral-900 hover:text-brand"
                             >
                               {l2.name}
-                            </Link>
+                            </HoverPrefetchLink>
                             {l2.children.length > 0 && (
                               <ul className="mt-2 flex flex-col gap-1.5 font-normal text-neutral-600">
                                 {l2.children.map((l3) => (
                                   <li key={l3.id}>
-                                    <Link href={href(locale, l3)} prefetch={false} className="hover:text-brand">
+                                    <HoverPrefetchLink href={href(locale, l3)} className="hover:text-brand">
                                       {l3.name}
-                                    </Link>
+                                    </HoverPrefetchLink>
                                   </li>
                                 ))}
                               </ul>
@@ -65,20 +64,19 @@ export function MegaMenu({
                       <ul className="columns-3 gap-8 font-normal text-neutral-700 xl:columns-5">
                         {l1.children.map((l2) => (
                           <li key={l2.id} className="break-inside-avoid py-1">
-                            <Link href={href(locale, l2)} prefetch={false} className="hover:text-brand">
+                            <HoverPrefetchLink href={href(locale, l2)} className="hover:text-brand">
                               {l2.name}
-                            </Link>
+                            </HoverPrefetchLink>
                           </li>
                         ))}
                       </ul>
                     )}
-                    <Link
+                    <HoverPrefetchLink
                       href={href(locale, l1)}
-                      prefetch={false}
                       className="mt-6 inline-block font-semibold text-brand underline"
                     >
                       {labels.viewAll.replace("{name}", l1.name)}
-                    </Link>
+                    </HoverPrefetchLink>
                   </div>
                 </div>
               )}

@@ -383,6 +383,8 @@ export function CartButton({ locale, label }: { locale: string; label: string })
   return (
     <Link
       href={`/${locale}/cart`}
+      // Opens the drawer instead of navigating (no progress bar).
+      data-no-progress
       onClick={(e) => {
         e.preventDefault();
         openCart();
