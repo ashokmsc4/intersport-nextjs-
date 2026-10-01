@@ -136,7 +136,7 @@ export function InfiniteProducts({
 
   return (
     <>
-      <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 xl:grid-cols-4" onClickCapture={rememberPosition}>
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-6 xl:grid-cols-4" onClickCapture={rememberPosition}>
         {products.map((product) => (
           <li key={product.sku}>
             <ProductTile product={product} locale={locale} />

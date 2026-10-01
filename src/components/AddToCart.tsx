@@ -190,7 +190,7 @@ export function AddToCart({
           <legend className={`${headingClass} mb-4`}>{d.title}</legend>
 
           <label
-            className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 px-5 py-5 ${mode === "home" ? "border-brand bg-neutral-50" : "border-neutral-200"} ${homeAllowed ? "" : "cursor-not-allowed opacity-50"}`}
+            className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 sm:gap-4 sm:px-5 sm:py-5 ${mode === "home" ? "border-brand bg-neutral-50" : "border-neutral-200"} ${homeAllowed ? "" : "cursor-not-allowed opacity-50"}`}
           >
             <input
               type="radio"
@@ -201,12 +201,12 @@ export function AddToCart({
               className="size-5 accent-black"
             />
             <HomeIcon />
-            <span className="flex-1 font-semibold tracking-wide">{d.home}</span>
+            <span className="min-w-0 flex-1 font-semibold tracking-wide">{d.home}</span>
             <span className={pillClass(homeAllowed)}>{homeAllowed ? d.available : d.unavailable}</span>
           </label>
 
           <div
-            className={`flex items-start gap-4 rounded-xl border-2 px-5 py-5 ${mode === "pickup" ? "border-brand bg-neutral-50" : "border-neutral-200"} ${pickupAllowed ? "" : "opacity-50"}`}
+            className={`flex items-start gap-3 rounded-xl border-2 p-4 sm:gap-4 sm:px-5 sm:py-5 ${mode === "pickup" ? "border-brand bg-neutral-50" : "border-neutral-200"} ${pickupAllowed ? "" : "opacity-50"}`}
           >
             <input
               id="delivery-pickup"

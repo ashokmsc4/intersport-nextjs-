@@ -29,7 +29,7 @@ export function SizeGuide({
             title={label}
             src={`/api/size-guide/${productId}`}
             sandbox="allow-scripts"
-            className="h-[70vh] w-full border-0"
+            className="h-[70dvh] w-full border-0"
           />
         </Modal>
       )}

@@ -20,6 +20,7 @@ import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
 import { Rail } from "@/components/home/Rail";
+import { Gallery } from "@/components/product/Gallery";
 import { BackendError } from "@/components/BackendError";
 import { describeError } from "@/lib/magento/diagnose";
 
@@ -159,21 +160,14 @@ export default async function ProductPage({
 
   return (
     <article>
-      <div className="grid gap-8 md:grid-cols-2">
-        <div className="grid grid-cols-4 gap-2">
-          {gallery.map((src, i) => (
-            <ProductImage
-              key={src}
-              src={src}
-              alt={i === 0 ? product.name : ""}
-              priority={i === 0}
-              sizes={i === 0 ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 12vw, 25vw"}
-              className={`rounded-lg ${i === 0 ? "col-span-4 aspect-square" : "aspect-square"}`}
-            />
-          ))}
-        </div>
+      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+        <Gallery
+          images={gallery.map((src) => ({ src, optimized: isOptimizable(src) }))}
+          name={product.name}
+          imageOf={dict.product.imageOf}
+        />
 
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-5 md:gap-6">
           {product.brand && (
             <p className="text-sm uppercase tracking-wide text-neutral-500">
               {product.brand}

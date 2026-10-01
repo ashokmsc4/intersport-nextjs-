@@ -80,6 +80,7 @@
     "outOfStock": "Out of stock",
     "description": "Description",
     "youMightAlsoLike": "You might also like",
+    "imageOf": "Image {n} of {total}",
     "color": "Colour",
     "chooseSize": "Choose a size",
     "quantity": "Quantity",
@@ -275,7 +276,9 @@
     "to": "to",
     "minPrice": "Minimum price",
     "maxPrice": "Maximum price",
-    "priceRange": "Price range"
+    "priceRange": "Price range",
+    "showResults": "Show results",
+    "closeFilters": "Close filters"
   },
   "delivery": {
     "title": "Delivery option",

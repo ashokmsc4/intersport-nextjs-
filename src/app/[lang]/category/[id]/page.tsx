@@ -154,7 +154,7 @@ export default async function CategoryPage({
         </ul>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
         <aside>
           <FilterPanel
             groups={groups}

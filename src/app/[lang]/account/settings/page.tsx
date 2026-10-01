@@ -28,7 +28,7 @@ export default async function SettingsPage({
     <AccountShell locale={lang} dict={dict} customer={customer} current="settings" title={t.settings}>
       <section className="rounded-lg bg-white p-5">
         <h2 className="mb-3 font-semibold">{t.details}</h2>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm [&_dd]:break-words">
           <dt className="text-neutral-500">{t.firstname}</dt>
           <dd>{customer.firstname}</dd>
           <dt className="text-neutral-500">{t.lastname}</dt>

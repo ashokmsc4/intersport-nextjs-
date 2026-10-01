@@ -61,9 +61,9 @@ function Linked({
 /** Section title with the brand's red accent bar and an optional View all link. */
 function SectionHeader({ title, href, action }: { title: string; href?: string; action?: string }) {
   return (
-    <div className="mb-5 flex items-end justify-between gap-4">
-      <h2 className="flex items-center gap-3 text-xl font-bold uppercase tracking-wide sm:text-2xl">
-        <span aria-hidden className="h-6 w-1.5 rounded-full bg-brand-accent" />
+    <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5 sm:items-end sm:gap-4">
+      <h2 className="flex min-w-0 items-center gap-2.5 text-lg leading-tight font-bold uppercase tracking-wide sm:gap-3 sm:text-2xl">
+        <span aria-hidden className="h-6 w-1.5 shrink-0 rounded-full bg-brand-accent" />
         {title}
       </h2>
       {href && action && (

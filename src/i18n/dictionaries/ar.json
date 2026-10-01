@@ -80,6 +80,7 @@
     "outOfStock": "غير متوفر",
     "description": "الوصف",
     "youMightAlsoLike": "قد يعجبك أيضاً",
+    "imageOf": "الصورة {n} من {total}",
     "color": "اللون",
     "chooseSize": "اختر المقاس",
     "quantity": "الكمية",
@@ -275,7 +276,9 @@
     "to": "إلى",
     "minPrice": "أدنى سعر",
     "maxPrice": "أعلى سعر",
-    "priceRange": "نطاق السعر"
+    "priceRange": "نطاق السعر",
+    "showResults": "عرض النتائج",
+    "closeFilters": "إغلاق التصفية"
   },
   "delivery": {
     "title": "خيار التوصيل",

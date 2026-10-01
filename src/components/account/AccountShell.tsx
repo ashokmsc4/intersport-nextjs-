@@ -44,8 +44,8 @@ export function AccountShell({
   const name = `${customer.firstname} ${customer.lastname}`;
 
   return (
-    <div className="-my-8 bg-[#efefef] py-8 shadow-[0_0_0_100vmax_#efefef] [clip-path:inset(0_-100vmax)]">
-      <nav aria-label={dict.nav.breadcrumb} className="mb-6 text-sm text-neutral-500">
+    <div className="-my-8 bg-[#efefef] py-6 sm:py-8 shadow-[0_0_0_100vmax_#efefef] [clip-path:inset(0_-100vmax)]">
+      <nav aria-label={dict.nav.breadcrumb} className="mb-4 text-sm text-neutral-500 sm:mb-6">
         <ol className="flex flex-wrap items-center gap-2">
           <li>
             <Link href={`/${locale}`} className="hover:text-brand">
@@ -71,8 +71,28 @@ export function AccountShell({
         </ol>
       </nav>
 
-      <div className="grid items-start gap-8 md:grid-cols-[16rem_1fr]">
-        <aside className="rounded-lg bg-white">
+      {/* Phones, on a section page: section tabs instead of the full sidebar. */}
+      {section && (
+        <nav aria-label={t.accountMenu} className="-mx-4 mb-5 md:hidden">
+          <ul className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {links.map(({ key, href, label, Icon }) => (
+              <li key={key} className="shrink-0">
+                <Link
+                  href={href}
+                  aria-current={current === key ? "page" : undefined}
+                  className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-sm whitespace-nowrap text-neutral-700 aria-[current=page]:border-brand aria-[current=page]:bg-brand aria-[current=page]:text-white [&_svg]:size-4"
+                >
+                  <Icon />
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
+
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-[16rem_minmax(0,1fr)] md:gap-8">
+        <aside className={`rounded-lg bg-white ${section ? "max-md:hidden" : ""}`}>
           <div className="flex items-center gap-3 border-b border-neutral-100 p-5">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-neutral-200 [&_svg]:size-5">
               <UserIcon />
@@ -111,7 +131,7 @@ export function AccountShell({
         </aside>
 
         <div className="min-w-0">
-          <h1 className="mb-6 text-2xl font-bold">{title}</h1>
+          <h1 className="mb-4 text-2xl font-bold sm:mb-6">{title}</h1>
           {children}
         </div>
       </div>

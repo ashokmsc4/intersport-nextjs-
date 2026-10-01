@@ -20,7 +20,7 @@ export function CartTotals({
 }) {
   const t = dict.cart;
   return (
-    <dl className="grid grid-cols-[1fr_auto] gap-y-2 text-sm">
+    <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-2 text-sm">
       <dt>{t.subtotal}</dt>
       <dd>{formatPrice(subtotal, locale)}</dd>
       {discount !== 0 && (

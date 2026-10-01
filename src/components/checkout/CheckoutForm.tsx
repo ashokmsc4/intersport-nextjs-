@@ -262,7 +262,7 @@ export function CheckoutForm({
   return (
     <>
       <CheckoutStepper locale={locale} step={review ? "payment" : "address"} dict={dict} />
-      <div className="grid items-start gap-6 pb-24 lg:grid-cols-[1fr_24rem] lg:pb-0 xl:grid-cols-[1fr_26rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_24rem] lg:pb-0 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="flex flex-col gap-4">
           {notice}
           <form id={FORM_ID} onSubmit={onSubmit} className={`${card} flex flex-col gap-8`}>
@@ -475,7 +475,7 @@ export function CheckoutForm({
   );
 }
 
-const card = "rounded-xl border border-neutral-200/70 bg-white p-5 shadow-sm sm:p-7";
+const card = "rounded-xl border border-neutral-200/70 bg-white p-4 shadow-sm sm:p-7";
 
 function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (

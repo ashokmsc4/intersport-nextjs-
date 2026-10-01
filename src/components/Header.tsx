@@ -23,7 +23,7 @@ export async function Header({
 
   return (
     <header className="relative border-b border-neutral-200">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:py-4">
         <MobileMenu
           locale={locale}
           tree={tree}
@@ -37,7 +37,7 @@ export async function Header({
             alt={dict.site.name}
             width={170}
             height={18}
-            className="h-auto w-32 sm:w-44"
+            className="h-auto w-26 min-[380px]:w-32 sm:w-44"
           />
         </Link>
         <SearchBox
@@ -46,12 +46,12 @@ export async function Header({
           imageHosts={imageHosts()}
           className="hidden flex-1 md:flex md:max-w-md"
         />
-        <nav className="flex items-center gap-2 text-sm whitespace-nowrap sm:gap-3">
+        <nav className="flex shrink-0 items-center gap-1 text-sm whitespace-nowrap sm:gap-3">
           <Link
             href={`/${locale}/search`}
             aria-label={dict.nav.search}
             title={dict.nav.search}
-            className="p-1 hover:text-brand md:hidden"
+            className="p-1.5 hover:text-brand md:hidden"
           >
             <SearchIcon />
           </Link>
@@ -63,7 +63,7 @@ export async function Header({
           <Link
             href={`/${otherLocale}`}
             hrefLang={otherLocale}
-            className="rounded border border-neutral-300 px-2 py-1 text-xs font-semibold hover:border-brand hover:text-brand"
+            className="ms-1 rounded border border-neutral-300 px-2 py-1 text-xs font-semibold hover:border-brand hover:text-brand"
           >
             {dict.nav.switchLanguage}
           </Link>

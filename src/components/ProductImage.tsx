@@ -34,7 +34,8 @@ export function ProductImage({
           unoptimized={!(optimized ?? isOptimizable(src))}
           // Magento's hotlink protection rejects image requests referred by other sites.
           referrerPolicy="no-referrer"
-          className="object-contain"
+          // A missing image shows the grey box, not its alt text.
+          className="object-contain text-transparent"
         />
       )}
     </div>

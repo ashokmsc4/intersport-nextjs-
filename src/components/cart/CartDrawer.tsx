@@ -389,7 +389,7 @@ export function CartButton({ locale, label }: { locale: string; label: string })
       }}
       aria-label={count > 0 ? `${label} (${count})` : label}
       title={label}
-      className="relative p-1 hover:text-brand"
+      className="relative p-1.5 hover:text-brand"
     >
       <BagIcon />
       {count > 0 && (
@@ -416,7 +416,7 @@ export function AccountButton({
       href={name ? `/${locale}/account` : `/${locale}/account/login`}
       aria-label={label}
       title={label}
-      className="flex items-center gap-1.5 p-1 hover:text-brand"
+      className="flex items-center gap-1.5 p-1.5 hover:text-brand"
     >
       <UserIcon />
       {name && <span className="hidden max-w-24 truncate text-sm xl:inline">{name}</span>}

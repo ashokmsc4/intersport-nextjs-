@@ -53,7 +53,7 @@ export default async function CartPage({ params }: PageProps<"/[lang]/cart">) {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">{dict.cart.title}</h1>
-      <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <ul className="divide-y divide-neutral-200 border-y border-neutral-200">
           {cart.items.map((item) => {
             const image = productImageUrl(item.image);
@@ -62,16 +62,26 @@ export default async function CartPage({ params }: PageProps<"/[lang]/cart">) {
             const color = attrs.find((a) => a.attribute_code === "color")?.label;
             const price = Number(item.price);
             const final = Number(item.final_price);
+            const lineTotal = (
+              <>
+                <p className="font-semibold">{formatPrice(final * Number(item.qty), lang)}</p>
+                {final < price && (
+                  <s className="text-neutral-500">{formatPrice(price * Number(item.qty), lang)}</s>
+                )}
+              </>
+            );
             return (
-              <li key={item.item_id} className="flex gap-4 py-4">
-                <ProductImage src={image} alt="" sizes="96px" className="size-24 shrink-0 rounded" />
-                <div className="flex flex-1 flex-col gap-1">
+              <li key={item.item_id} className="flex gap-3 py-4 sm:gap-4">
+                <ProductImage src={image} alt="" sizes="96px" className="size-20 shrink-0 rounded sm:size-24" />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
                   {item.brand && (
                     <p className="text-xs uppercase tracking-wide text-neutral-500">
                       {item.brand}
                     </p>
                   )}
                   <p className="font-medium">{item.name}</p>
+                  {/* Phones: the line total sits under the name. */}
+                  <div className="flex flex-wrap items-baseline gap-x-2 text-sm sm:hidden">{lineTotal}</div>
                   <p className="text-sm text-neutral-600">
                     {[
                       size && size !== "One Size" && `${dict.cart.size}: ${size}`,
@@ -95,16 +105,7 @@ export default async function CartPage({ params }: PageProps<"/[lang]/cart">) {
                     dict={{ cart: dict.cart, product: dict.product, errors: dict.errors }}
                   />
                 </div>
-                <div className="text-end text-sm">
-                  <p className="font-semibold">
-                    {formatPrice(final * Number(item.qty), lang)}
-                  </p>
-                  {final < price && (
-                    <s className="text-neutral-500">
-                      {formatPrice(price * Number(item.qty), lang)}
-                    </s>
-                  )}
-                </div>
+                <div className="hidden shrink-0 text-end text-sm whitespace-nowrap sm:block">{lineTotal}</div>
               </li>
             );
           })}

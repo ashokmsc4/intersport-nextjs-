@@ -77,7 +77,7 @@ export function CheckoutStepper({
 
 /** Selectable card row shared by the shipping, payment and saved-address choices. */
 export const optionClass =
-  "flex cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-3.5 text-sm transition hover:border-neutral-400 has-[:checked]:border-brand has-[:checked]:bg-brand/[0.04] has-[:checked]:ring-1 has-[:checked]:ring-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40";
+  "flex cursor-pointer items-center gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-3.5 text-sm sm:px-4 transition hover:border-neutral-400 has-[:checked]:border-brand has-[:checked]:bg-brand/[0.04] has-[:checked]:ring-1 has-[:checked]:ring-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40";
 
 const radioClass = "size-4 shrink-0 accent-brand";
 
@@ -124,10 +124,10 @@ export function ShippingOptions({
               onChange={() => onChange(method.code)}
               className={radioClass}
             />
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 [&_svg]:size-5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 sm:size-9 [&_svg]:size-5">
               <Icon />
             </span>
-            <span className="flex flex-1 flex-col">
+            <span className="flex min-w-0 flex-1 flex-col">
               <span className="font-medium">{method.title}</span>
               {kind !== "other" && (
                 <span className="text-xs text-neutral-500">
@@ -218,7 +218,7 @@ export function PaymentOptions({
                 className={radioClass}
               />
               {/* Fixed-width logo slot so the labels line up. */}
-              <span className="flex h-7 w-20 shrink-0 items-center [&_svg]:size-5 [&_svg]:text-neutral-500">
+              <span className="flex h-7 w-16 shrink-0 items-center sm:w-20 [&_svg]:size-5 [&_svg]:text-neutral-500">
                 {logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -233,7 +233,7 @@ export function PaymentOptions({
                   <CardIcon />
                 )}
               </span>
-              <span className="font-medium">{choice.label}</span>
+              <span className="min-w-0 font-medium">{choice.label}</span>
             </label>
             {code === "cashondelivery" && value === choice.key && (
               <p className="mt-2 px-4 text-xs text-neutral-600">{t.codNote}</p>

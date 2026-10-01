@@ -63,29 +63,39 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Pick<Dictionary
       </ul>
 
       <div className="border-t border-neutral-200">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
-          {columns.map((column) => (
-            <nav key={column.title} aria-label={column.title}>
-              <h2 className="mb-3 font-bold uppercase tracking-wide">{column.title}</h2>
-              <ul className="flex flex-col gap-2 text-neutral-700">
-                {column.links.map((link) => (
-                  <li key={link.label}>
-                    {link.internal ? (
-                      <Link href={link.href} className="hover:text-brand">
-                        {t[link.label]}
-                      </Link>
-                    ) : (
-                      <a href={link.href} className="hover:text-brand">
-                        {t[link.label]}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
+        <div className="mx-auto grid max-w-7xl px-4 py-6 sm:grid-cols-2 sm:gap-8 sm:py-10 lg:grid-cols-4">
+          {columns.map((column) => {
+            const links = column.links.map((link) => (
+              <li key={link.label}>
+                {link.internal ? (
+                  <Link href={link.href} className="block py-1 hover:text-brand sm:py-0">
+                    {t[link.label]}
+                  </Link>
+                ) : (
+                  <a href={link.href} className="block py-1 hover:text-brand sm:py-0">
+                    {t[link.label]}
+                  </a>
+                )}
+              </li>
+            ));
+            return (
+              <nav key={column.title} aria-label={column.title}>
+                {/* Phones: collapsed sections keep the footer short. */}
+                <details className="group border-b border-neutral-200 sm:hidden">
+                  <summary className="flex cursor-pointer list-none items-center justify-between py-3 font-bold uppercase tracking-wide [&::-webkit-details-marker]:hidden">
+                    {column.title}
+                    <span aria-hidden className="text-xl leading-none text-neutral-500 group-open:hidden">+</span>
+                    <span aria-hidden className="hidden text-xl leading-none text-neutral-500 group-open:inline">−</span>
+                  </summary>
+                  <ul className="flex flex-col gap-1 pb-3 text-neutral-700">{links}</ul>
+                </details>
+                <h2 className="mb-3 hidden font-bold uppercase tracking-wide sm:block">{column.title}</h2>
+                <ul className="hidden flex-col gap-2 text-neutral-700 sm:flex">{links}</ul>
+              </nav>
+            );
+          })}
 
-          <section>
+          <section className="mt-6 sm:mt-0">
             <h2 className="mb-3 font-bold uppercase tracking-wide">{t.contact}</h2>
             <address className="flex flex-col gap-2 not-italic text-neutral-700">
               <span>{t.address}</span>
@@ -98,7 +108,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Pick<Dictionary
             </address>
           </section>
 
-          <section>
+          <section className="mt-6 sm:mt-0">
             <h2 className="mb-3 font-bold uppercase tracking-wide">{t.followUs}</h2>
             <ul className="flex flex-wrap gap-2">
               {SOCIAL.map((s) => (

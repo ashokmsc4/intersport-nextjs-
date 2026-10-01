@@ -40,7 +40,7 @@ export function MobileMenu({
         type="button"
         onClick={() => setOpen(true)}
         aria-expanded={open}
-        className="flex items-center gap-1 text-sm font-medium lg:hidden"
+        className="-ms-1.5 flex shrink-0 items-center gap-1 p-1.5 text-sm font-medium lg:hidden"
       >
         <span aria-hidden className="text-xl leading-none">☰</span>
         <span className="sr-only sm:not-sr-only">{labels.menu}</span>
@@ -89,12 +89,13 @@ function Level({ nodes, depth, locale, viewAll }: LevelProps) {
       {nodes.map((node) =>
         node.children.length > 0 ? (
           <li key={node.id}>
-            <details className="group/level">
+            <details>
               <summary
-                className={`flex cursor-pointer list-none items-center justify-between py-3 ${depth === 1 ? "font-semibold uppercase" : "font-medium"}`}
+                className={`flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden ${depth === 1 ? "py-3 font-semibold uppercase" : "py-2.5 text-sm text-neutral-700"}`}
               >
                 {node.name}
-                <span aria-hidden className="transition-transform group-open/level:rotate-45">
+                {/* Only this item's own open state turns the + into ×, not a parent's. */}
+                <span aria-hidden className="px-1 text-lg leading-none transition-transform [details[open]>summary>&]:rotate-45">
                   +
                 </span>
               </summary>
@@ -110,7 +111,7 @@ function Level({ nodes, depth, locale, viewAll }: LevelProps) {
           <li key={node.id}>
             <Link
               href={href(node)}
-              className={`block py-3 ${depth === 1 ? "font-semibold uppercase" : "py-2 text-sm text-neutral-700"}`}
+              className={`block ${depth === 1 ? "py-3 font-semibold uppercase" : "py-2.5 text-sm text-neutral-700"}`}
             >
               {node.name}
             </Link>
