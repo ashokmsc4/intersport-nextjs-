@@ -19,6 +19,7 @@ import { AddToCart, type SizeChoice } from "@/components/AddToCart";
 import { Price } from "@/components/Price";
 import { ProductCard, cardFromDetail } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
+import { Rail } from "@/components/home/Rail";
 import { BackendError } from "@/components/BackendError";
 import { describeError } from "@/lib/magento/diagnose";
 
@@ -236,27 +237,45 @@ export default async function ProductPage({
 
       {/* Recommendations can take seconds on a cold cache; the page shows without them. */}
       <Suspense fallback={null}>
-        <Recommendations locale={locale} sku={product.sku} title={dict.product.youMightAlsoLike} />
+        <Recommendations
+          locale={locale}
+          sku={product.sku}
+          title={dict.product.youMightAlsoLike}
+          labels={{ previous: dict.home.previous, next: dict.home.next }}
+        />
       </Suspense>
     </article>
   );
 }
 
-async function Recommendations({ locale, sku, title }: { locale: Locale; sku: string; title: string }) {
-  const items = (await getRecommendations(locale, sku).catch(() => [] as ProductDetail[])).slice(0, 8);
-  // Recommendations come without URL keys; look them up so the links are SEO URLs.
-  const urlKeys = await urlKeysForSkus(locale, items.map((i) => i.sku)).catch(() => new Map<string, string>());
+async function Recommendations({
+  locale,
+  sku,
+  title,
+  labels,
+}: {
+  locale: Locale;
+  sku: string;
+  title: string;
+  labels: { previous: string; next: string };
+}) {
+  const all = (await getRecommendations(locale, sku).catch(() => [] as ProductDetail[])).slice(0, 16);
+  // Recommendations come without URL keys; look them up so the links are SEO URLs. The
+  // lookup only finds catalog-listed products, which also drops out-of-stock ones that the
+  // recommendation endpoint still returns. If the lookup fails, show them all as before.
+  const urlKeys = await urlKeysForSkus(locale, all.map((i) => i.sku)).catch(() => null);
+  const items = (urlKeys ? all.filter((i) => urlKeys.has(i.sku)) : all).slice(0, 12);
   if (items.length === 0) return null;
   return (
     <section className="mt-12">
       <h2 className="mb-4 text-xl font-bold">{title}</h2>
-      <ul className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
-        {items.slice(0, 8).map((item) => (
-          <li key={item.sku}>
-            <ProductCard product={cardFromDetail(item, urlKeys.get(item.sku))} locale={locale} />
+      <Rail labels={labels}>
+        {items.map((item) => (
+          <li key={item.sku} className="w-44 shrink-0 snap-start sm:w-56">
+            <ProductCard product={cardFromDetail(item, urlKeys?.get(item.sku))} locale={locale} />
           </li>
         ))}
-      </ul>
+      </Rail>
     </section>
   );
 }
